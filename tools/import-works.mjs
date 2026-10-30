@@ -134,12 +134,13 @@ for (const s of targets) {
   const works = [];
   lines.forEach((line, i) => {
     const c = clean(line);
-    const { y } = startOf(line);
+    const { y, m } = startOf(line);
+    const at = { _i: i, _m: m }; // 何行目・何月か（続けて上演された同じ公演をまとめるのに使い、最後に消す）
     if (s.retired && y > s.retired) return;
     if (topIdx >= 0 && i >= topIdx && i <= endIdx) {
       if (/外部出演|特別出演/.test(line)) return;
       const t = titlesOf(c);
-      if (t.length) works.push({ y, t: t.join('／'), k: 'top', g: entries[i].g, v: venueOf(c) });
+      if (t.length) works.push({ y, t: t.join('／'), k: 'top', g: entries[i].g, v: venueOf(c), ...at });
       return;
     }
     const marks = [...line.matchAll(/'''([^']+)'''/g)].map(m => clean(m[1]));
@@ -154,7 +155,7 @@ for (const s of targets) {
       } else t = titlesOf(c)[0];
       // 大劇場主演・ヒロイン（トップ就任前の役替わりなど）は会場を「大劇場」とし、印がヒロインかどうかを h に残す
       const h = k === 'grand' && marks.some(m => /大劇場ヒロイン/.test(m)) ? 1 : undefined;
-      if (t) works.push({ y, t, k, g: entries[i].g, h, v: k === 'grand' ? '大劇場' : k === 'lead' || k === 'tojo' ? venueOf(c) : undefined });
+      if (t) works.push({ y, t, k, g: entries[i].g, h, v: k === 'grand' ? '大劇場' : k === 'lead' || k === 'tojo' ? venueOf(c) : undefined, ...at });
     }
   });
   // 同じ作品がバウと東上で別々の行に書かれているときも、東上の1行にまとめる
@@ -172,7 +173,19 @@ for (const s of targets) {
       works.splice(i, 1);
     }
   }
-  for (const w of works) { if (!w.v) delete w.v; if (!w.g) delete w.g; if (!w.h) delete w.h; }
+  // 東上公演などが会場ごとに続けて書かれたもの（間に別の公演の行が無く、同じ作品名で、大劇場以外の会場が
+  // 2か月以内に続く。例「2021年2月『ダル・レークの恋』（赤坂ACTシアター）」「2021年3月 同（ドラマシティ）」）は
+  // 1つの公演なので1行にまとめ、会場を並べる
+  for (let i = works.length - 1; i > 0; i--) {
+    const [a, b] = [works[i - 1], works[i]];
+    const months = (b.y * 12 + b._m) - (a.y * 12 + a._m);
+    if (a.t === b.t && a.k === b.k && b._i === a._i + 1 && a.v && b.v && !MAIN.test(a.v) && !MAIN.test(b.v)
+      && a.v !== '全国ツアー' && b.v !== '全国ツアー' && months >= 0 && months <= 2) {
+      a.v = [...new Set([...a.v.split('・'), ...b.v.split('・')])].join('・');
+      works.splice(i, 1);
+    }
+  }
+  for (const w of works) { delete w._i; delete w._m; if (!w.v) delete w.v; if (!w.g) delete w.g; if (!w.h) delete w.h; }
   if (works.length) { s.works = works; withWorks++; }
 }
 
