@@ -162,6 +162,16 @@ for (const s of targets) {
     const [a, b] = [works[i - 1], works[i]];
     if (a.t === b.t && [a.k, b.k].includes('bow') && [a.k, b.k].includes('tojo')) works.splice(a.k === 'bow' ? i - 1 : i, 1);
   }
+  // 宝塚大劇場と東京宝塚劇場で別々の行に書かれた同じ公演（新人公演の役が違ったときなど）は1行にまとめる。
+  // 会場は大劇場と東京の本公演なので書かない（画面では「大劇場」）
+  const MAIN = /^(宝塚大劇場|東京宝塚劇場)(のみ)?$/;
+  for (let i = works.length - 1; i > 0; i--) {
+    const [a, b] = [works[i - 1], works[i]];
+    if (a.t === b.t && a.k === b.k && b.y - a.y <= 1 && (!a.v || MAIN.test(a.v)) && (!b.v || MAIN.test(b.v))) {
+      delete a.v;
+      works.splice(i, 1);
+    }
+  }
   for (const w of works) { if (!w.v) delete w.v; if (!w.g) delete w.g; if (!w.h) delete w.h; }
   if (works.length) { s.works = works; withWorks++; }
 }
