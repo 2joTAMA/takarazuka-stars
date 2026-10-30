@@ -346,17 +346,24 @@ function bindSettings() {
     saveView();
     render();
   });
+  // 結果は設定シートの中にも出す（スマホではトーストがシートに隠れやすいため）
+  const cfgStatus = (text, ok) => {
+    const el = $('#cfg-status');
+    el.textContent = text;
+    el.dataset.state = ok === undefined ? '' : ok ? 'ok' : 'ng';
+  };
   $('#cfg-test').addEventListener('click', async () => {
+    cfgStatus('接続中…');
     try {
       const r = await store.testConnection(readCfgForm());
-      toast(`接続できました（${r.count}人分のデータ）`);
+      cfgStatus(`✓ 接続できました（${r.count}人分のデータ）`, true);
     } catch (e) {
-      toast(e.message, 6000);
+      cfgStatus(`✕ ${e.message}`, false);
     }
   });
   $('#cfg-save').addEventListener('click', async () => {
     store.setConfig(readCfgForm());
-    toast('連携設定を保存しました');
+    cfgStatus('✓ 連携設定を保存しました', true);
     if (!state.changes.length) await reload();
   });
   $('#btn-download').addEventListener('click', () => {
@@ -381,10 +388,19 @@ function bindSettings() {
 let toastTimer;
 function toast(text, ms = 3000) {
   const el = $('#toast');
+  const popover = typeof el.showPopover === 'function';
   el.textContent = text;
-  el.classList.toggle('show', Boolean(text));
   clearTimeout(toastTimer);
-  if (text && ms) toastTimer = setTimeout(() => el.classList.remove('show'), ms);
+  // 開いているシートより手前に出すため、表示のたびに最前面へ出し直す
+  if (popover && el.matches(':popover-open')) el.hidePopover();
+  if (text && popover) el.showPopover();
+  el.classList.toggle('show', Boolean(text));
+  if (text && ms) {
+    toastTimer = setTimeout(() => {
+      el.classList.remove('show');
+      if (popover && el.matches(':popover-open')) el.hidePopover();
+    }, ms);
+  }
 }
 
 async function reload() {

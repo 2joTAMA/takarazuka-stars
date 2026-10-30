@@ -335,6 +335,9 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .35); }
 
 .toast {
   position: fixed;
+  inset: auto;
+  margin: 0;
+  border: 0;
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom) + 20px);
   max-width: calc(100vw - 32px);
@@ -350,3 +353,6 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .35); }
   z-index: 10;
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
+.cfg-status { min-height: 1.4em; margin: 0 0 12px; font-size: 14px; }
+.cfg-status[data-state="ok"] { color: var(--c-shinko); }
+.cfg-status[data-state="ng"] { color: #c62828; }

@@ -50,9 +50,16 @@ const headers = cfg => ({
   Authorization: `Bearer ${cfg.token}`,
 });
 
+function httpMessage(status) {
+  if (status === 401) return 'トークンが正しくないか、期限切れです (401)';
+  if (status === 403) return 'トークンに書き込み権限がありません (403)';
+  if (status === 404) return 'ユーザー名・リポジトリ名が違うか、トークンがこのリポジトリを選んでいません (404)';
+  return `GitHubから読み込めませんでした (${status})`;
+}
+
 async function fetchRemote(cfg) {
   const res = await fetch(api(cfg, `?ref=${encodeURIComponent(cfg.branch)}`), { headers: headers(cfg), cache: 'no-store' });
-  if (!res.ok) throw new Error(`GitHubから読み込めませんでした (${res.status})`);
+  if (!res.ok) throw new Error(httpMessage(res.status));
   const j = await res.json();
   return { data: JSON.parse(fromBase64(j.content)), sha: j.sha };
 }
