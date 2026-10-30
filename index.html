@@ -9,12 +9,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="宝塚スター">
   <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="icon" href="icon.svg?v=5" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-512.png?v=5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=4">
-  <script type="module" src="js/app.js?v=4"></script>
+  <link rel="stylesheet" href="css/style.css?v=5">
+  <script type="module" src="js/app.js?v=5"></script>
 </head>
 <body>
   <header class="bar">
@@ -55,7 +56,6 @@
         <div class="seg" data-setting="retired">
           <label><input type="radio" name="retired" value="none"><span>出さない</span></label>
           <label><input type="radio" name="retired" value="tops"><span>トップのみ</span></label>
-          <label><input type="radio" name="retired" value="all"><span>全員</span></label>
         </div>
       </div>
       <div class="field">
@@ -89,7 +89,8 @@
         </div>
       </div>
 
-      <h2>GitHub連携（編集内容の保存先）</h2>
+      <details class="fold" id="cfg-fold">
+        <summary><h2>GitHub連携</h2><span class="badge" id="cfg-badge"></span></summary>
       <p class="note">この端末にだけ保存されます。見るだけなら設定は不要です。</p>
       <label class="field-input">ユーザー名<input id="cfg-owner" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
       <label class="field-input">リポジトリ名<input id="cfg-repo" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
@@ -100,6 +101,7 @@
         <button type="button" id="cfg-save" class="btn btn-primary">連携設定を保存</button>
       </div>
       <p class="cfg-status" id="cfg-status" role="status"></p>
+      </details>
 
       <h2>データ</h2>
       <div class="row-buttons">

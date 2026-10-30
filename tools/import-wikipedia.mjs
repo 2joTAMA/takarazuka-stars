@@ -45,6 +45,7 @@ for (let term = Number(fromArg); term <= Number(toArg); term++) {
   const listOf = re => new Set(names((txt.match(re) || [, ''])[1]));
   const shinko = listOf(/新人公演主演（ヒロイン）経験者に(.*?)がいる/);
   const bow = listOf(/バウホール公演主演（ヒロイン）経験者に(.*?)がいる/);
+  const tojo = listOf(/東上公演主演（ヒロイン）経験者に(.*?)がいる/);
 
   const tables = txt.split('{|').slice(1).map(t => t.split(/\n\s*\|\}/)[0]);
   const table = tables.find(t => t.includes('役柄')) || '';
@@ -68,6 +69,7 @@ for (let term = Number(fromArg); term <= Number(toArg); term++) {
     const statuses = [];
     if (shinko.has(name)) statuses.push('shinko');
     if (bow.has(name)) statuses.push('bow');
+    if (tojo.has(name)) statuses.push('tojo');
     stars.push({
       name, term, order,
       role: roleRaw === '娘役' || /→娘役$/.test(roleRaw) ? 'musume' : 'otoko',

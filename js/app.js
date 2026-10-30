@@ -1,8 +1,8 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, STATUS_BY_ID, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=4';
-import * as store from './store.js?v=4';
+import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=5';
+import * as store from './store.js?v=5';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 4;
+const APP_VERSION = 5;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -13,6 +13,8 @@ const view = {
   split: true, mark: 'dots', retired: 'tops', allTerms: false, history: true, size: 'm', theme: 'auto', focus: null,
   ...readView(),
 };
+// 「全員」は廃止（退団者はトップしかデータが無いため）
+if (view.retired === 'all') view.retired = 'tops';
 function readView() {
   try { return JSON.parse(localStorage.getItem(LS_VIEW)) || {}; } catch { return {}; }
 }
@@ -28,7 +30,7 @@ const historyText = h => (h || []).map(id => TROUPE_BY_ID[id]?.short ?? '?').joi
 
 function isVisible(s) {
   if (isActive(s)) return true;
-  return view.retired === 'all' || (view.retired === 'tops' && isTop(s));
+  return view.retired === 'tops' && isTop(s);
 }
 
 function starHtml(s) {
@@ -163,7 +165,7 @@ function legendHtml() {
     ${sample('st-top', 'トップ')}
     ${sample('st-kumicho', '組長')}
     ${sample('st-fukuKumicho', '副組長')}
-    ${sample('st-shinko', '新公主演')}
+    ${sample('st-shinko', '新公主演・ヒロイン')}
     ${sample('st-top is-retired', '退団トップ')}
     ${view.split || view.mark === 'group' ? '' : `<span class="mark-${view.mark}">${sample('role-otoko', '男役')}${sample('role-musume', '娘役')}</span>`}
     <span class="legend-note">研${SHINKO_MAX_KEN}までが新人公演の対象</span>
@@ -189,7 +191,7 @@ function openInfo(id) {
   const s = state.data.stars.find(x => x.id === id);
   if (!s) return;
   const row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : '';
-  const statuses = (s.statuses || []).map(st => STATUS_BY_ID[st]?.label ?? st).join('、');
+  const statuses = (s.statuses || []).map(st => statusLabel(st, s.role)).join('、');
   $('#info-body').innerHTML = `
     <h2 class="info-name">${starHtml({ ...s, history: [] })}</h2>
     <dl class="info">
@@ -223,6 +225,7 @@ function openEditor(id, preset = {}) {
   f.troupe.value = s ? s.troupe ?? '' : preset.troupe ?? '';
   f.troupe.dataset.prev = f.troupe.value;
   f.role.value = s?.role ?? (preset.role || 'otoko');
+  updateStatusLabels();
   for (const cb of document.querySelectorAll('#edit-statuses input')) cb.checked = Boolean(s?.statuses?.includes(cb.value));
   f.history.value = historyText(s?.history);
   f.retiredFlag.checked = s ? !isActive(s) : false;
@@ -320,6 +323,7 @@ async function save(force = false) {
   if (!store.hasToken()) {
     toast('先に「設定」でGitHub連携をしてください');
     openSettings();
+    $('#cfg-fold').open = true;
     return;
   }
   const btn = $('#btn-save');
@@ -358,6 +362,8 @@ function openSettings() {
   f.theme.value = view.theme;
   $('#mark-field').hidden = view.split;
   const cfg = store.getConfig();
+  $('#cfg-badge').textContent = store.hasToken() ? '連携済み' : '未設定';
+  $('#cfg-badge').dataset.ok = store.hasToken();
   $('#cfg-owner').value = cfg.owner;
   $('#cfg-repo').value = cfg.repo;
   $('#cfg-branch').value = cfg.branch;
@@ -404,6 +410,8 @@ function bindSettings() {
   $('#cfg-save').addEventListener('click', async () => {
     store.setConfig(readCfgForm());
     cfgStatus('✓ 連携設定を保存しました', true);
+    $('#cfg-badge').textContent = store.hasToken() ? '連携済み' : '未設定';
+    $('#cfg-badge').dataset.ok = store.hasToken();
     if (!state.changes.length) await reload();
   });
   $('#btn-download').addEventListener('click', () => {
@@ -454,10 +462,17 @@ async function reload() {
   render();
 }
 
+// 役柄に合わせて「新公主演／新公ヒロイン」などの呼び方を切り替える
+function updateStatusLabels() {
+  const role = form().role.value;
+  for (const cb of document.querySelectorAll('#edit-statuses input')) cb.nextElementSibling.textContent = statusLabel(cb.value, role);
+}
+
 function bindUi() {
   $('#edit-troupe').innerHTML = TROUPES.map(t => `<option value="${t.id}">${t.name}</option>`).join('') + '<option value="">未配属</option>';
   $('#edit-statuses').innerHTML = STATUSES.map(s =>
     `<label class="check"><input type="checkbox" value="${s.id}"><span>${s.label}</span></label>`).join('');
+  for (const r of document.querySelectorAll('#edit-form input[name=role]')) r.addEventListener('change', updateStatusLabels);
 
   document.addEventListener('click', e => {
     const focusBtn = e.target.closest('[data-focus]');

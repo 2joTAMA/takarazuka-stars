@@ -1,4 +1,20 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="96" fill="#7a1f3d"/>
-  <path d="M256 92l44 112 120 6-93 76 32 116-103-66-103 66 32-116-93-76 120-6z" fill="#ffd54a"/>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#3b1a4a"/>
+      <stop offset=".55" stop-color="#7a1f3d"/>
+      <stop offset="1" stop-color="#c2456e"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" fill="url(#bg)"/>
+  <!-- きらめき（4つ角の光） -->
+  <path d="M256 104c10 84 40 114 124 124-84 10-114 40-124 124-10-84-40-114-124-124 84-10 114-40 124-124z" fill="#fff"/>
+  <path d="M378 312c4 34 16 46 50 50-34 4-46 16-50 50-4-34-16-46-50-50 34-4 46-16 50-50z" fill="#ffe3ee" opacity=".9"/>
+  <path d="M146 334c3 22 10 29 32 32-22 3-29 10-32 32-3-22-10-29-32-32 22-3 29-10 32-32z" fill="#ffe3ee" opacity=".75"/>
+  <!-- 階段（大階段のイメージ） -->
+  <g fill="#fff" opacity=".22">
+    <rect x="96" y="420" width="320" height="10" rx="5"/>
+    <rect x="128" y="440" width="256" height="10" rx="5"/>
+    <rect x="160" y="460" width="192" height="10" rx="5"/>
+  </g>
 </svg>

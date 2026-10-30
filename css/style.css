@@ -253,7 +253,7 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 
 .un-cell { white-space: normal; background: var(--surface-2) !important; }
 .un-cell .star { display: inline-block; margin-right: 1em; }
-.un-label { display: block; margin-bottom: .2em; color: var(--muted); font-size: .85em; }
+.un-label { display: inline-block; margin-right: 1em; color: var(--muted); font-size: .85em; }
 
 .grid .sub th, .grid .sub td {
   background: var(--surface-2);
@@ -477,3 +477,38 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .sheet h2:focus { outline: none; }
+
+/* 畳める設定（GitHub連携） */
+.fold { margin: 6px 0 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.fold summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+  list-style: none;
+  cursor: pointer;
+}
+.fold summary::-webkit-details-marker { display: none; }
+.fold summary h2 { margin: 0 !important; }
+.fold summary::after {
+  content: "";
+  width: .55em;
+  height: .55em;
+  margin-left: auto;
+  margin-right: 4px;
+  border-right: 2px solid var(--muted);
+  border-bottom: 2px solid var(--muted);
+  transform: rotate(45deg) translateY(-2px);
+  transition: transform .2s;
+}
+.fold[open] summary::after { transform: rotate(225deg) translateY(-2px); }
+.fold[open] { padding-bottom: 4px; }
+.badge {
+  padding: 2px 9px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+.badge[data-ok="true"] { background: color-mix(in srgb, var(--c-shinko) 16%, var(--surface)); color: var(--c-shinko); }

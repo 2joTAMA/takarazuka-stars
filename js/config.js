@@ -13,16 +13,21 @@ export const ROLES = [
   { id: 'musume', name: '娘役' },
 ];
 
-// 見た目は css/style.css の .st-<id> で決める
+// 見た目は css/style.css の .st-<id> で決める。musume は娘役のときの呼び方
 export const STATUSES = [
   { id: 'top', label: 'トップスター' },
   { id: 'topMusume', label: 'トップ娘役' },
   { id: 'kumicho', label: '組長' },
   { id: 'fukuKumicho', label: '副組長' },
-  { id: 'shinko', label: '新人公演主演' },
-  { id: 'bow', label: 'バウ主演' },
+  { id: 'shinko', label: '新公主演', musume: '新公ヒロイン' },
+  { id: 'bow', label: 'バウ主演', musume: 'バウヒロイン' },
+  { id: 'tojo', label: '東上主演', musume: '東上ヒロイン' },
 ];
 export const STATUS_BY_ID = Object.fromEntries(STATUSES.map(s => [s.id, s]));
+export const statusLabel = (id, role) => {
+  const s = STATUS_BY_ID[id];
+  return s ? (role === 'musume' && s.musume) || s.label : id;
+};
 
 // 新人公演に出られるのは研7まで
 export const SHINKO_MAX_KEN = 7;
