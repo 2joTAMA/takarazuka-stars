@@ -85,12 +85,15 @@
 * { box-sizing: border-box; }
 html, body { height: 100%; margin: 0; }
 html { background: var(--accent); }
+/* ホーム画面アプリでは 100dvh が実際の画面より短く計算されることがあり、下のメニューの下に隙間ができる。
+   JS が実測した高さ（--app-h）を使い、body を fixed 要素の基準にする（transform） */
 body {
-  display: flex;
-  flex-direction: column;
   width: 100%;
   height: 100dvh;
+  height: var(--app-h, 100dvh);
   overflow: hidden;
+  position: relative;
+  transform: translateZ(0);
   background: var(--bg);
   color: var(--fg);
   font-family: var(--font);
@@ -104,20 +107,22 @@ body[data-size="l"] { --fs: 14px; }
 button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
 
 /* ---- ヘッダー ---- */
-/* iPhone の Safari は画面上端に固定された要素の色でステータスバーを塗るので、fixed にして単色にする */
-:root { --bar-h: calc(env(safe-area-inset-top) + 52px); }
-.bar {
+/* 画面全体を固定した不透明の入れ物に入れる。これが無いと iOS 26 の Safari が画面上端にぼかしをかけ、
+   ヘッダーの上半分がぼける */
+#screen {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 5;
-  box-sizing: border-box;
-  height: var(--bar-h);
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg);
+}
+.bar {
+  flex: 0 0 auto;
+  min-height: calc(env(safe-area-inset-top) + 52px);
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: env(safe-area-inset-top) 14px 0;
+  padding: calc(env(safe-area-inset-top) + 6px) 14px 6px;
   background-color: var(--accent);
   color: var(--on-accent);
 }
@@ -156,7 +161,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
   position: fixed;
   left: 10px;
   right: 10px;
-  bottom: max(8px, calc(env(safe-area-inset-bottom) - 16px));
+  bottom: max(22px, calc(env(safe-area-inset-bottom) - 8px));
   z-index: 6;
   display: flex;
   max-width: 560px;
@@ -210,13 +215,13 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .t-senka { --tc: var(--t-senka); --tc-on: #fff; }
 
 /* ---- 表 ---- */
-main { flex: 1; margin-top: var(--bar-h); min-height: 0; min-width: 0; overflow: hidden; }
+main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 .wrap {
   height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 64px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 84px);
 }
 .loading { padding: 24px 16px; color: var(--muted); }
 
@@ -319,8 +324,18 @@ main { flex: 1; margin-top: var(--bar-h); min-height: 0; min-width: 0; overflow:
   vertical-align: .1em;
 }
 .star.st-fukuKumicho .nm::after { content: "副"; }
-.info-name .st-kumicho .nm::after { content: "組長"; }
-.info-name .st-fukuKumicho .nm::after { content: "副組長"; }
+.info-badge {
+  display: inline-block;
+  margin-left: .4em;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--c-badge) 15%, transparent);
+  color: var(--c-badge);
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: .25em;
+}
+.info-badge.b-top, .info-badge.b-topMusume { background: color-mix(in srgb, var(--c-top) 14%, transparent); color: var(--c-top); }
 .lg { display: inline-flex; align-items: center; gap: .3em; }
 .lg-badge { margin: 0; }
 .star.is-retired { color: var(--c-retired); font-weight: 400; }
@@ -513,7 +528,7 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
   position: fixed;
   inset: auto;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 70px);
+  bottom: calc(env(safe-area-inset-bottom) + 90px);
   z-index: 10;
   max-width: calc(100vw - 32px);
   margin: 0;
@@ -619,3 +634,13 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 .w-tag.k-bow, .w-tag.k-tojo, .w-tag.k-tour, .w-tag.k-lead { background: color-mix(in srgb, var(--c-badge) 15%, transparent); color: var(--c-badge); }
 .w-tag.k-top { background: color-mix(in srgb, var(--c-top) 14%, transparent); color: var(--c-top); }
 .w-title small { display: block; color: var(--muted); font-size: 11px; }
+.works .w-group {
+  display: block;
+  margin-top: 10px;
+  padding: 4px 0 4px 8px;
+  border-top: 0;
+  border-left: 3px solid var(--tc);
+  color: var(--fg);
+  font-size: 12px;
+  font-weight: 700;
+}

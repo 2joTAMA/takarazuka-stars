@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, sortStatuses, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=9';
-import * as store from './store.js?v=9';
-import { ICONS } from './icons.js?v=9';
+import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, sortStatuses, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=10';
+import * as store from './store.js?v=10';
+import { ICONS } from './icons.js?v=10';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 9;
+const APP_VERSION = 10;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -11,7 +11,7 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 // ---- 表示設定（この端末だけ） ----
 const LS_VIEW = 'tz.view';
 const view = {
-  split: true, mark: 'dots', retired: 'tops', allTerms: false, history: true, size: 'm', theme: 'auto', focus: null,
+  split: true, mark: 'dots', retired: 'tops', senka: true, allTerms: false, history: true, size: 'm', theme: 'auto', focus: null,
   ...readView(),
 };
 // 「全員」は廃止（退団者はトップしかデータが無いため）
@@ -29,12 +29,8 @@ const state = { data: null, sha: null, changes: [], editing: false };
 const cellKey = (term, troupe, role) => `${term}|${troupe ?? ''}|${role ?? ''}`;
 const historyText = h => (h || []).map(id => TROUPE_BY_ID[id]?.short ?? '?').join('→');
 
-// 主演作品を取り込んでいる期（これ以降は詳細のステータス欄を出さない）
-const WORKS_FROM_TERM = 89;
-const debutText = term => {
-  const d = state.data?.debuts?.[term];
-  return d ? `${d.y}年 ${esc(d.troupe ?? '')}『${esc(d.t)}』` : '';
-};
+// 初舞台・退団公演の「2009年 宙組『…』」の形（初舞台の組は「宙組」、退団公演の組は組のid で入っている）
+const showText = d => d ? `${d.y}年 ${esc(TROUPE_BY_ID[d.g]?.name ?? d.troupe ?? '')}『${esc(d.t)}』` : '';
 
 function isVisible(s) {
   if (isActive(s)) return true;
@@ -71,7 +67,7 @@ function render() {
   renderTabs();
   renderSaveButton();
 
-  const troupes = view.focus ? [TROUPE_BY_ID[view.focus]] : TROUPES;
+  const troupes = view.focus ? [TROUPE_BY_ID[view.focus]] : TROUPES.filter(t => view.senka || t.id !== 'senka');
   const shownIds = new Set(troupes.map(t => t.id));
   const roles = view.split ? ROLES.map(r => r.id) : [null];
   const stars = state.data.stars.filter(s => isVisible(s) && (s.troupe ? shownIds.has(s.troupe) : !view.focus));
@@ -231,10 +227,14 @@ function setFocus(id, exact = false) {
 const WORK_TAG = { shinko: '新公', bow: 'バウ', tojo: '東上', tour: '全ツ', top: 'トップ' };
 function worksHtml(s) {
   if (!s.works?.length) return '';
+  let prev = null;
   const items = s.works.map(w => {
     const tag = WORK_TAG[w.k] ?? (s.role === 'musume' ? 'ヒロイン' : '主演');
     const venue = w.v ?? (w.k === 'top' ? '大劇場' : '');
-    return `<li><span class="w-year">${w.y}</span><span class="w-tag k-${w.k}">${tag}</span><span class="w-title">${esc(w.t)}${venue ? `<small>${esc(venue)}</small>` : ''}</span></li>`;
+    // 組が変わったところ（初めの組・組替え）に組名の見出しを入れる
+    const head = w.g && w.g !== prev ? `<li class="w-group t-${w.g}">${TROUPE_BY_ID[w.g].name}</li>` : '';
+    prev = w.g || prev;
+    return `${head}<li><span class="w-year">${w.y}</span><span class="w-tag k-${w.k}">${tag}</span><span class="w-title">${esc(w.t)}${venue ? `<small>${esc(venue)}</small>` : ''}</span></li>`;
   }).join('');
   return `<h3 class="info-sub">主演作品</h3><ul class="works">${items}</ul>`;
 }
@@ -244,18 +244,19 @@ function openInfo(id) {
   const s = state.data.stars.find(x => x.id === id);
   if (!s) return;
   const row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : '';
-  const statuses = sortStatuses(s.statuses || []).map(st => statusLabel(st, s.role)).join('、');
+  // 詳細では名前は色を付けず、肩書きはラベルで出す
+  const badges = ['top', 'topMusume', 'kumicho', 'fukuKumicho'].filter(st => s.statuses?.includes(st))
+    .map(st => `<span class="info-badge b-${st}">${st === 'top' ? 'トップスター' : statusLabel(st, s.role)}</span>`).join('');
   const dot = `<span class="role-dot role-${s.role}"></span>`;
   $('#info-body').innerHTML = `
-    <div class="info-head">${dot}<div>${s.kana ? `<div class="info-kana">${esc(s.kana)}</div>` : ''}<h2 class="info-name">${starHtml({ ...s, history: [] })}</h2></div></div>
+    <div class="info-head">${dot}<div>${s.kana ? `<div class="info-kana">${esc(s.kana)}</div>` : ''}<h2 class="info-name">${esc(s.name)}${badges}</h2></div></div>
     <dl class="info">
       ${row('期', `${s.term}期（研${kenOf(s.term)}）`)}
       ${row('組', s.troupe ? TROUPE_BY_ID[s.troupe].name : '未配属')}
       ${row('役柄', dot + ROLES.find(r => r.id === s.role)?.name)}
       ${row('組替え', s.history?.length > 1 ? historyText(s.history) : '')}
-      ${row('初舞台', debutText(s.term))}
-      ${s.term >= WORKS_FROM_TERM ? '' : row('ステータス', esc(statuses))}
-      ${row('退団', isActive(s) ? '' : s.retired ? `${s.retired}年` : '退団')}
+      ${row('初舞台', showText(state.data.debuts?.[s.term]))}
+      ${row('退団', isActive(s) ? '' : showText(s.farewell) || (s.retired ? `${s.retired}年` : '退団'))}
       ${row('メモ', esc(s.note))}
     </dl>
     ${worksHtml(s)}`;
@@ -414,6 +415,7 @@ function openSettings() {
   f.split.value = view.split ? '1' : '0';
   f.retired.value = view.retired;
   f.allTerms.value = view.allTerms ? '1' : '0';
+  f.senka.value = view.senka ? '1' : '0';
   f.history.value = view.history ? '1' : '0';
   f.size.value = view.size;
   f.mark.value = view.mark;
@@ -570,6 +572,16 @@ function bindUi() {
   bindSettings();
   bindSwipe();
 }
+
+// ホーム画面アプリでは 100dvh が実際より短いことがあるので、実測した高さを使う
+function syncAppHeight() {
+  const h = window.innerHeight || window.visualViewport?.height || 0;
+  if (h) document.documentElement.style.setProperty('--app-h', h + 'px');
+}
+syncAppHeight();
+addEventListener('resize', syncAppHeight);
+addEventListener('orientationchange', syncAppHeight);
+window.visualViewport?.addEventListener('resize', syncAppHeight);
 
 async function init() {
   applyTheme();

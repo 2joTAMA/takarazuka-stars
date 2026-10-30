@@ -2,11 +2,13 @@
 <html lang="ja">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>宝塚スター</title>
   <meta name="theme-color" content="#5b4bc4">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <!-- ステータスバーの裏までページを広げる設定（black-translucent＋viewport-fit=cover）にすると、ホーム画面アプリで
+       画面の高さが実際より短く報告され、下に余白が出ることがあるので、ページはステータスバーの下から始める -->
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="宝塚スター">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg?v=6" type="image/svg+xml">
@@ -14,10 +16,11 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=9">
-  <script type="module" src="js/app.js?v=9"></script>
+  <link rel="stylesheet" href="css/style.css?v=10">
+  <script type="module" src="js/app.js?v=10"></script>
 </head>
 <body>
+  <div id="screen">
   <header class="bar">
     <h1>宝塚スター</h1>
     <div class="bar-actions">
@@ -30,6 +33,7 @@
   <main>
     <div class="wrap" id="wrap"><p class="loading">読み込み中…</p></div>
   </main>
+  </div>
   <nav class="tabs" id="tabs" aria-label="組の切り替え"></nav>
 
   <!-- 表示・連携の設定 -->
@@ -61,6 +65,13 @@
           <label><input type="radio" name="retired" value="none"><span>出さない</span></label>
           <label><input type="radio" name="retired" value="tops"><span>トップのみ</span></label>
           <label><input type="radio" name="retired" value="leads"><span>主演経験者</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">専科（全体表示）</span>
+        <div class="seg" data-setting="senka">
+          <label><input type="radio" name="senka" value="1"><span>出す</span></label>
+          <label><input type="radio" name="senka" value="0"><span>出さない</span></label>
         </div>
       </div>
       <div class="field">
