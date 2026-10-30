@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>宝塚スター一覧</title>
+  <meta name="theme-color" content="#7a1f3d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="スター一覧">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+  <script type="module" src="js/app.js"></script>
+</head>
+<body>
+  <header class="bar">
+    <h1>宝塚スター一覧</h1>
+    <div class="bar-actions">
+      <button id="btn-save" class="btn-save" hidden>保存<span id="dirty-count"></span></button>
+      <button id="btn-edit" class="btn" aria-pressed="false">編集</button>
+      <button id="btn-settings" class="btn" aria-label="設定">設定</button>
+    </div>
+  </header>
+  <nav class="tabs" id="tabs" aria-label="組の切り替え"></nav>
+
+  <main>
+    <div class="wrap" id="wrap"><p class="loading">読み込み中…</p></div>
+  </main>
+
+  <!-- 表示・連携の設定 -->
+  <dialog id="dlg-settings" class="sheet">
+    <form method="dialog">
+      <h2>表示</h2>
+      <div class="field">
+        <span class="label">男役・娘役</span>
+        <div class="seg" data-setting="split">
+          <label><input type="radio" name="split" value="1"><span>分ける</span></label>
+          <label><input type="radio" name="split" value="0"><span>まとめる</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">退団者</span>
+        <div class="seg" data-setting="retired">
+          <label><input type="radio" name="retired" value="none"><span>出さない</span></label>
+          <label><input type="radio" name="retired" value="tops"><span>トップのみ</span></label>
+          <label><input type="radio" name="retired" value="all"><span>全員</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">現役がいない期</span>
+        <div class="seg" data-setting="allTerms">
+          <label><input type="radio" name="allTerms" value="0"><span>出さない</span></label>
+          <label><input type="radio" name="allTerms" value="1"><span>出す</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">組替え履歴</span>
+        <div class="seg" data-setting="history">
+          <label><input type="radio" name="history" value="1"><span>出す</span></label>
+          <label><input type="radio" name="history" value="0"><span>出さない</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">文字の大きさ</span>
+        <div class="seg" data-setting="size">
+          <label><input type="radio" name="size" value="s"><span>小</span></label>
+          <label><input type="radio" name="size" value="m"><span>中</span></label>
+          <label><input type="radio" name="size" value="l"><span>大</span></label>
+        </div>
+      </div>
+
+      <h2>GitHub連携（編集内容の保存先）</h2>
+      <p class="note">この端末にだけ保存されます。見るだけなら設定は不要です。</p>
+      <label class="field-input">ユーザー名<input id="cfg-owner" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label class="field-input">リポジトリ名<input id="cfg-repo" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
+      <label class="field-input">ブランチ<input id="cfg-branch" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="main"></label>
+      <label class="field-input">トークン<input id="cfg-token" type="password" autocomplete="off" spellcheck="false"></label>
+      <div class="row-buttons">
+        <button type="button" id="cfg-test" class="btn">接続テスト</button>
+        <button type="button" id="cfg-save" class="btn btn-primary">連携設定を保存</button>
+      </div>
+
+      <h2>データ</h2>
+      <div class="row-buttons">
+        <button type="button" id="btn-download" class="btn">JSONをダウンロード</button>
+        <button type="button" id="btn-discard" class="btn btn-danger">未保存の変更を破棄</button>
+      </div>
+      <p class="note" id="data-source"></p>
+
+      <div class="sheet-foot"><button class="btn btn-primary" value="close">閉じる</button></div>
+    </form>
+  </dialog>
+
+  <!-- 名前をタップしたとき（閲覧） -->
+  <dialog id="dlg-info" class="sheet">
+    <form method="dialog">
+      <div id="info-body"></div>
+      <div class="sheet-foot"><button class="btn btn-primary" value="close">閉じる</button></div>
+    </form>
+  </dialog>
+
+  <!-- 編集 -->
+  <dialog id="dlg-edit" class="sheet">
+    <form id="edit-form" method="dialog">
+      <h2 id="edit-title" tabindex="-1" autofocus>編集</h2>
+      <label class="field-input">芸名<input name="name" required autocomplete="off"></label>
+      <div class="field-row">
+        <label class="field-input">期<input name="term" type="number" inputmode="numeric" min="1" max="200" required></label>
+        <label class="field-input">組<select name="troupe" id="edit-troupe"></select></label>
+      </div>
+      <div class="field">
+        <span class="label">役柄</span>
+        <div class="seg">
+          <label><input type="radio" name="role" value="otoko"><span>男役</span></label>
+          <label><input type="radio" name="role" value="musume"><span>娘役</span></label>
+        </div>
+      </div>
+      <div class="field">
+        <span class="label">ステータス</span>
+        <div class="checks" id="edit-statuses"></div>
+      </div>
+      <label class="field-input">組替え履歴<input name="history" placeholder="例: 月→宙→花" autocomplete="off">
+        <small>組を変えると自動で追記されます</small></label>
+      <div class="field-row">
+        <label class="check"><input type="checkbox" name="retiredFlag"><span>退団</span></label>
+        <label class="field-input">退団年<input name="retiredYear" type="number" inputmode="numeric" placeholder="例: 2026"></label>
+      </div>
+      <label class="field-input">メモ<textarea name="note" rows="2"></textarea></label>
+      <div class="row-buttons" id="edit-order">
+        <span class="label">並び順（成績順）</span>
+        <button type="button" class="btn" data-move="-1">▲ 上へ</button>
+        <button type="button" class="btn" data-move="1">▼ 下へ</button>
+      </div>
+      <div class="sheet-foot">
+        <button type="button" class="btn btn-danger" id="edit-delete">削除</button>
+        <span class="spacer"></span>
+        <button class="btn" value="cancel" formnovalidate>キャンセル</button>
+        <button class="btn btn-primary" value="ok">決定</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
