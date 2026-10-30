@@ -46,12 +46,30 @@ function stageLines(txt) {
 }
 
 const titlesOf = s => [...s.matchAll(/『([^』]+)』/g)].map(m => m[1].trim());
+// 劇場名の略称（長い・紛らわしいものだけ）
+const VENUE_ABBR = [
+  // 「TBS赤坂ACTシアター・ドラマシティ」のように前の劇場名とつながる書き方があるので、先に赤坂ACTを置き換える
+  [/TBS赤坂ACTシアター|赤坂ACTシアター/g, '赤坂ACT'],
+  [/梅田芸術劇場シアター・ドラマシティ|シアター・ドラマシティ|ドラマシティ/g, 'DC'],
+  [/梅田芸術劇場メインホール|梅田芸術劇場/g, '梅芸メイン'],
+  [/日本青年館ホール|日本青年館大ホール/g, '日本青年館'],
+  [/KAAT神奈川芸術劇場/g, 'KAAT'],
+  [/東京建物BrilliaHALL(箕面)?/g, (_, minoh) => minoh ? 'ブリリア・箕面' : 'ブリリア'],
+  [/宝塚バウホール|バウホール/g, 'バウ'],
+  [/東京国際フォーラム(ホールC)?/g, '国際フォーラム'],
+  [/東急シアターオーブ/g, 'オーブ'],
+];
+const shortVenue = v => {
+  let s = v.replace(/\s+/g, '');
+  for (const [re, abbr] of VENUE_ABBR) s = s.replace(re, abbr);
+  return [...new Set(s.split('・'))].slice(0, 3).join('・');
+};
 const venueOf = s => {
   const m = [...s.matchAll(/（([^（）]+)）/g)].map(x => x[1]).find(x =>
     /全国ツアー|博多座|バウ|青年館|ドラマシティ|梅田|東京建物|KAAT|フォーラム|オーブ|赤坂|御園座|中日劇場|シアター|ホール|劇場|台湾|香港|公演/.test(x));
   if (!m) return undefined;
   if (/全国ツアー/.test(m)) return '全国ツアー';
-  return m.replace(/\s+/g, '').split('・').slice(0, 2).join('・');
+  return shortVenue(m);
 };
 const startOf = line => {
   const m = line.match(/(\d{4})年\s*(\d{1,2})?/);
@@ -116,7 +134,7 @@ for (const s of targets) {
         const at = c.indexOf('新人公演：');
         t = titlesOf(at >= 0 ? c.slice(0, at) : c).at(-1);
       } else t = titlesOf(c)[0];
-      if (t) works.push({ y, t, k, v: k === 'lead' ? venueOf(c) : undefined });
+      if (t) works.push({ y, t, k, v: k === 'lead' || k === 'tojo' ? venueOf(c) : undefined });
     }
   });
   for (const w of works) if (!w.v) delete w.v;

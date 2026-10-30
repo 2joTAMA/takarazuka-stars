@@ -39,6 +39,7 @@ const section = (txt, heading) => {
 };
 
 const stars = [];
+const debuts = {}; // 期 → 初舞台 { y, troupe, t }
 for (let term = Number(fromArg); term <= Number(toArg); term++) {
   const txt = await raw(`宝塚歌劇団${term}期生`, `k${term}.txt`);
   if (!txt) continue;
@@ -46,6 +47,15 @@ for (let term = Number(fromArg); term <= Number(toArg); term++) {
   const shinko = listOf(/新人公演主演（ヒロイン）経験者に(.*?)がいる/);
   const bow = listOf(/バウホール公演主演（ヒロイン）経験者に(.*?)がいる/);
   const tojo = listOf(/東上公演主演（ヒロイン）経験者に(.*?)がいる/);
+  // 書き方は「初舞台の演目は、○組公演「…」」が多い。古い期は「○組公演『…』で初舞台」
+  const intro = clean(txt.slice(0, 8000));
+  const debut = (intro.match(/初舞台の演目は、([^。]*)。/) || intro.match(/初舞台[^。\n]*?「[^」]+」/)
+    || intro.match(/(花|月|雪|星|宙)組公演『[^』]+』で初舞台/) || [''])[0];
+  const debutTitle = debut.match(/「([^」]+)」/)?.[1] ?? debut.match(/『([^』]+)』/)?.[1];
+  if (debutTitle) {
+    const troupe = debut.match(/(花|月|雪|星|宙)組/)?.[0];
+    debuts[term] = { y: term + 1914, t: debutTitle, ...(troupe ? { troupe } : {}) };
+  }
 
   const tables = txt.split('{|').slice(1).map(t => t.split(/\n\s*\|\}/)[0]);
   const table = tables.find(t => t.includes('役柄')) || '';
@@ -119,17 +129,17 @@ for (const [tid, title] of Object.entries(TROUPE_PAGES)) {
   }
 }
 
-// 現役 + 退団したトップだけを残す
-const keep = stars.filter(s => !s.retired || s.statuses.includes('top') || s.statuses.includes('topMusume'));
-let seq = 0;
+// 現役 + 退団者のうちトップ・別箱（バウ・東上）主演経験者を残す（新公主演だけの人は除く）
+const keep = stars.filter(s => !s.retired || s.statuses.some(st => ['top', 'topMusume', 'bow', 'tojo'].includes(st)));
+const RANK = ['top', 'topMusume', 'kumicho', 'fukuKumicho', 'tojo', 'bow', 'shinko'];
 const out = keep.map(s => {
   const r = {
-    id: `s${(++seq).toString(36)}`,
+    id: `${s.term}-${s.order}`, // 期と期内の順番から作るので、取り込み直しても変わらない
     name: s.name, kana: s.kana, term: s.term, order: s.order, role: s.role,
     troupe: s.retired && s.topOf ? s.topOf.at(-1) : s.troupe,
     history: s.history,
     retired: s.retired === true ? 0 : s.retired,
-    statuses: s.statuses,
+    statuses: [...s.statuses].sort((a, b) => RANK.indexOf(a) - RANK.indexOf(b)),
   };
   if (r.history.length <= 1) delete r.history;
   if (r.retired === null) delete r.retired;
@@ -138,8 +148,9 @@ const out = keep.map(s => {
 });
 fs.writeFileSync(outFile, JSON.stringify({
   version: 1,
-  source: 'Wikipedia日本語版（宝塚歌劇団◯期生・各組の記事）から自動取得',
+  source: 'Wikipedia日本語版（宝塚歌劇団◯期生・各組・個人の記事）から自動取得',
   importedAt: new Date().toISOString().slice(0, 10),
+  debuts,
   stars: out,
 }, null, 1));
 

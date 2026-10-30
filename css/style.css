@@ -104,14 +104,20 @@ body[data-size="l"] { --fs: 14px; }
 button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent; }
 
 /* ---- ヘッダー ---- */
+/* iPhone の Safari は画面上端に固定された要素の色でステータスバーを塗るので、fixed にして単色にする */
+:root { --bar-h: calc(env(safe-area-inset-top) + 52px); }
 .bar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  left: 0;
+  right: 0;
   z-index: 5;
+  box-sizing: border-box;
+  height: var(--bar-h);
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: calc(env(safe-area-inset-top) + 10px) 14px 10px;
+  padding: env(safe-area-inset-top) 14px 0;
   background-color: var(--accent);
   color: var(--on-accent);
 }
@@ -150,7 +156,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
   position: fixed;
   left: 10px;
   right: 10px;
-  bottom: calc(env(safe-area-inset-bottom) + 8px);
+  bottom: max(8px, calc(env(safe-area-inset-bottom) - 16px));
   z-index: 6;
   display: flex;
   max-width: 560px;
@@ -158,10 +164,10 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
   padding: 5px;
   border: 1px solid color-mix(in srgb, var(--line-strong) 35%, transparent);
   border-radius: 24px;
-  background: color-mix(in srgb, var(--surface) 70%, transparent);
-  box-shadow: 0 8px 28px rgba(20, 10, 40, .18);
-  -webkit-backdrop-filter: blur(18px) saturate(1.6);
-  backdrop-filter: blur(18px) saturate(1.6);
+  background: color-mix(in srgb, var(--surface) 42%, transparent);
+  box-shadow: 0 6px 22px rgba(20, 10, 40, .16);
+  -webkit-backdrop-filter: blur(5px) saturate(1.5);
+  backdrop-filter: blur(5px) saturate(1.5);
 }
 .tab {
   position: relative;
@@ -204,13 +210,13 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
 .t-senka { --tc: var(--t-senka); --tc-on: #fff; }
 
 /* ---- 表 ---- */
-main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
+main { flex: 1; margin-top: var(--bar-h); min-height: 0; min-width: 0; overflow: hidden; }
 .wrap {
   height: 100%;
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 86px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 64px);
 }
 .loading { padding: 24px 16px; color: var(--muted); }
 
@@ -507,7 +513,7 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
   position: fixed;
   inset: auto;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 92px);
+  bottom: calc(env(safe-area-inset-bottom) + 70px);
   z-index: 10;
   max-width: calc(100vw - 32px);
   margin: 0;

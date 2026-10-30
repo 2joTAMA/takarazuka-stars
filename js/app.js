@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, sortStatuses, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=8';
-import * as store from './store.js?v=8';
-import { ICONS } from './icons.js?v=8';
+import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, sortStatuses, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=9';
+import * as store from './store.js?v=9';
+import { ICONS } from './icons.js?v=9';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 8;
+const APP_VERSION = 9;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -29,9 +29,19 @@ const state = { data: null, sha: null, changes: [], editing: false };
 const cellKey = (term, troupe, role) => `${term}|${troupe ?? ''}|${role ?? ''}`;
 const historyText = h => (h || []).map(id => TROUPE_BY_ID[id]?.short ?? '?').join('→');
 
+// 主演作品を取り込んでいる期（これ以降は詳細のステータス欄を出さない）
+const WORKS_FROM_TERM = 89;
+const debutText = term => {
+  const d = state.data?.debuts?.[term];
+  return d ? `${d.y}年 ${esc(d.troupe ?? '')}『${esc(d.t)}』` : '';
+};
+
 function isVisible(s) {
   if (isActive(s)) return true;
-  return view.retired === 'tops' && isTop(s);
+  if (view.retired === 'tops') return isTop(s);
+  // 主演経験者: トップと別箱（バウ・東上）主演。新公主演だけの人は出さない
+  if (view.retired === 'leads') return isTop(s) || (s.statuses || []).some(st => st === 'bow' || st === 'tojo');
+  return false;
 }
 
 function starHtml(s) {
@@ -174,7 +184,7 @@ function legendHtml() {
 }
 
 function renderTabs() {
-  const tabs = [...TROUPES.map(t => ({ id: t.id, label: t.id === 'senka' ? '専科' : t.short })), { id: '', label: '全体' }];
+  const tabs = [...TROUPES.filter(t => t.id !== 'senka').map(t => ({ id: t.id, label: t.short })), { id: '', label: '全体' }];
   $('#tabs').innerHTML = tabs.map(t =>
     `<button class="tab t-${t.id || 'all'}" data-focus="${t.id}" aria-pressed="${(view.focus ?? '') === t.id}">${ICONS[t.id || 'all']}<span>${t.label}</span></button>`
   ).join('');
@@ -197,9 +207,10 @@ function bindSwipe() {
     const quick = Date.now() - start.t < 700;
     start = null;
     if (!quick || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
-    const order = [null, ...TROUPES.map(t => t.id)];
-    const next = order[order.indexOf(view.focus) + (dx < 0 ? 1 : -1)];
-    if (next === undefined) return;
+    const order = [null, ...TROUPES.filter(t => t.id !== 'senka').map(t => t.id)];
+    const i = order.indexOf(view.focus);
+    const next = order[i + (dx < 0 ? 1 : -1)];
+    if (i < 0 || next === undefined) return;
     view.focus = next;
     saveView();
     render();
@@ -242,7 +253,8 @@ function openInfo(id) {
       ${row('組', s.troupe ? TROUPE_BY_ID[s.troupe].name : '未配属')}
       ${row('役柄', dot + ROLES.find(r => r.id === s.role)?.name)}
       ${row('組替え', s.history?.length > 1 ? historyText(s.history) : '')}
-      ${row('ステータス', esc(statuses))}
+      ${row('初舞台', debutText(s.term))}
+      ${s.term >= WORKS_FROM_TERM ? '' : row('ステータス', esc(statuses))}
       ${row('退団', isActive(s) ? '' : s.retired ? `${s.retired}年` : '退団')}
       ${row('メモ', esc(s.note))}
     </dl>
