@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=14';
-import * as store from './store.js?v=14';
-import { ICONS } from './icons.js?v=14';
+import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=15';
+import * as store from './store.js?v=15';
+import { ICONS } from './icons.js?v=15';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 14;
+const APP_VERSION = 15;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -11,11 +11,13 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 // ---- 表示設定（この端末だけ） ----
 const LS_VIEW = 'tz.view';
 const view = {
-  split: false, mark: 'dots', retired: 'leads', senka: true, allTerms: false, history: true, size: 'm', theme: null, focus: null,
+  split: false, mark: 'dots', retired: 'leads', senka: false, allTerms: false, history: true, size: 'm', theme: null, focus: null,
   ...readView(),
 };
 // v14 で初期設定を「まとめる」「主演経験者」に変えたので、それより前の設定は一度だけ合わせる
 if ((view.ver ?? 0) < 14) Object.assign(view, { split: false, retired: 'leads', ver: 14 });
+// v15 で専科・現役がいない期を「出さない」を初期設定にした
+if (view.ver < 15) Object.assign(view, { senka: false, allTerms: false, ver: 15 });
 // まとめたときの見分け方は「両方に点」だけにした
 view.mark = 'dots';
 // ライト・ダークはヘッダーのボタンで切り替えて覚えておく（初めて開いたときだけ端末の設定に合わせる）
@@ -58,9 +60,9 @@ function applyTheme() {
   const dark = view.theme === 'dark';
   document.documentElement.dataset.theme = view.theme;
   document.querySelector('meta[name="theme-color"]').content = dark ? '#2e2770' : '#5b4bc4';
-  // ボタンには押したあとのモードのマーク（ライトなら月、ダークなら太陽）
+  // ボタンには今のモードのマーク（ライトなら太陽、ダークなら月）
   const btn = $('#btn-theme');
-  if (btn) btn.innerHTML = dark ? ICONS.sun : ICONS.moon;
+  if (btn) btn.innerHTML = dark ? ICONS.moon : ICONS.sun;
 }
 
 function render() {
