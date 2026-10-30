@@ -3,6 +3,7 @@
 // usage: node tools/import-works.mjs <cacheDir> <stars.json> [fromTerm=85]
 // works: [{ y: 初日の年, t: 作品名, k: 種類, g?: 組, v?: 会場 }]
 // farewell: { y: 年, t: 作品名, g?: 組 }
+// roleSince: 役柄を変えた年（roleFrom がある人だけ）
 //   k = shinko（新人公演） / bow（バウ） / tojo（東上） / tour（全国ツアー） / grand（大劇場） / top（トップ時代の公演） / lead（その他の主演・ヒロイン）
 import fs from 'node:fs';
 import path from 'node:path';
@@ -187,6 +188,17 @@ for (const s of targets) {
   }
   for (const w of works) { delete w._i; delete w._m; if (!w.v) delete w.v; if (!w.g) delete w.g; if (!w.h) delete w.h; }
   if (works.length) { s.works = works; withWorks++; }
+}
+
+// 役柄を変えた人（男役→娘役など）の転向した年。個人ページの「2017年：娘役へ転向」「2017年12月25日付で娘役へと転向」から
+for (const s of data.stars.filter(s => s.roleFrom)) {
+  const txt = await raw(s.name, `p/${s.name}.txt`);
+  const to = s.role === 'musume' ? '(?:娘役|女役)' : '男役'; // 「女役へ転向」と書くページもある
+  // 年と「転向」の間に別の年を挟まない（略歴の「2015年：入団<br />2017年：娘役へ転向」で入団年を拾わないように）
+  const text = clean(txt.replace(/<br\s*\/?>/g, '\n'));
+  const m = text.match(new RegExp(`(\\d{4})年(?:(?!\\d{4}年)[^。\\n]){0,25}?${to}(?:へ|に)と?転向`));
+  if (m) s.roleSince = Number(m[1]);
+  else delete s.roleSince;
 }
 
 // 退団者の退団公演（'''退団公演''' などと書かれた行。複数あれば最後の行）

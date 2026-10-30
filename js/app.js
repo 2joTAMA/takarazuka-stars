@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=15';
-import * as store from './store.js?v=15';
-import { ICONS } from './icons.js?v=15';
+import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=16';
+import * as store from './store.js?v=16';
+import { ICONS } from './icons.js?v=16';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 15;
+const APP_VERSION = 16;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -244,6 +244,12 @@ function worksHtml(s) {
 }
 
 
+// 役柄を変えた人は「男役→娘役（2017年〜）」（年が分からなければ年なし）
+const roleName = id => ROLES.find(r => r.id === id)?.name ?? '';
+const roleText = s => s.roleFrom
+  ? `${roleName(s.roleFrom)}→${roleName(s.role)}${s.roleSince ? `（${s.roleSince}年〜）` : ''}`
+  : roleName(s.role);
+
 function openInfo(id) {
   const s = state.data.stars.find(x => x.id === id);
   if (!s) return;
@@ -259,7 +265,7 @@ function openInfo(id) {
     <dl class="info">
       ${row('期', `${s.term}期（研${kenOf(s.term)}）`)}
       ${row('組', s.troupe ? TROUPE_BY_ID[s.troupe].name : '未配属')}
-      ${row('役柄', dot + ROLES.find(r => r.id === s.role)?.name)}
+      ${row('役柄', dot + roleText(s))}
       ${row('組替え', s.history?.length > 1 ? historyText(s.history) : '')}
       ${row('初舞台', showText(state.data.debuts?.[s.term]))}
       ${row('退団', isActive(s) ? '' : showText(s.farewell) || (s.retired ? `${s.retired}年` : '退団'))}

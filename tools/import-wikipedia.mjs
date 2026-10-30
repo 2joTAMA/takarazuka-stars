@@ -75,6 +75,8 @@ for (let term = Number(fromArg); term <= Number(toArg); term++) {
     stars.push({
       name, kana: /^[ぁ-ゖー・ ]+$/.test(kana) ? kana : undefined, term, order,
       role: roleRaw === '娘役' || /→娘役$/.test(roleRaw) ? 'musume' : 'otoko',
+      // 「男役→娘役」のように役柄を変えた人は元の役柄を残す（転向した年は個人ページから import-works.mjs が足す）
+      roleFrom: /^(男役|娘役)→/.test(roleRaw) ? (roleRaw.startsWith('男役') ? 'otoko' : 'musume') : undefined,
       troupe: history.at(-1) || null,
       history,
       retired: ry ? Number(ry[1]) : null,
@@ -128,7 +130,7 @@ const RANK = ['top', 'topMusume', 'kumicho', 'fukuKumicho', 'tojo', 'bow', 'shin
 const out = keep.map(s => {
   const r = {
     id: `${s.term}-${s.order}`, // 期と期内の順番から作るので、取り込み直しても変わらない
-    name: s.name, kana: s.kana, term: s.term, order: s.order, role: s.role,
+    name: s.name, kana: s.kana, term: s.term, order: s.order, role: s.role, roleFrom: s.roleFrom,
     troupe: s.troupe ?? s.topOf?.at(-1) ?? null,
     history: s.history,
     retired: s.retired === true ? 0 : s.retired,
@@ -137,6 +139,7 @@ const out = keep.map(s => {
   if (r.history.length <= 1) delete r.history;
   if (r.retired === null) delete r.retired;
   if (!r.kana) delete r.kana;
+  if (!r.roleFrom) delete r.roleFrom;
   return r;
 });
 fs.writeFileSync(outFile, JSON.stringify({

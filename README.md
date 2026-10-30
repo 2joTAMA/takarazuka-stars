@@ -39,6 +39,7 @@
 - `id`: `期-期内の順番`（取り込み直しても変わらない）
 - `order`: 期の中の並び（Wikipedia の一覧の順）
 - `role`: `otoko`（男役）/ `musume`（娘役）
+- `roleFrom` / `roleSince`: 役柄を変えた人の元の役柄と、変えた年（例 男役→娘役 2017年）
 - `troupe`: `hana` `tsuki` `yuki` `hoshi` `sora` `senka`、未配属は `null`
 - `history`: 組替え履歴（例 `["tsuki","sora","hana"]`）
 - `retired`: 退団年（現役なら項目なし、年不明は `0`）
