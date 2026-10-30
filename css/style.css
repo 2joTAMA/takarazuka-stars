@@ -504,6 +504,7 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 .info-kana { color: var(--muted); font-size: 12px; letter-spacing: .08em; }
 .role-dot { display: inline-block; width: .55em; height: .55em; margin-right: .35em; border-radius: 50%; vertical-align: .1em; }
 .role-dot.role-otoko { background: var(--c-otoko); }
+.role-arrow { margin: 0 .3em 0 .15em; color: var(--muted); }
 .role-dot.role-musume { background: var(--c-musume); }
 .info { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0 0 8px; font-size: 14px; }
 .info dt { color: var(--muted); }
