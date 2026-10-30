@@ -1,5 +1,8 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, STATUS_BY_ID, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js';
-import * as store from './store.js';
+import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, STATUS_BY_ID, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=3';
+import * as store from './store.js?v=3';
+
+// 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
+const APP_VERSION = 3;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -328,6 +331,7 @@ function openSettings() {
   $('#data-source').textContent = d
     ? `${d.source ?? ''}（取得 ${d.importedAt ?? '-'}${d.updatedAt ? ` / 最終更新 ${d.updatedAt.slice(0, 10)}` : ''}）`
     : '';
+  $('#app-version').textContent = `アプリの版: ${APP_VERSION}`;
   $('#dlg-settings').showModal();
 }
 
@@ -392,13 +396,17 @@ function toast(text, ms = 3000) {
   el.textContent = text;
   clearTimeout(toastTimer);
   // 開いているシートより手前に出すため、表示のたびに最前面へ出し直す
-  if (popover && el.matches(':popover-open')) el.hidePopover();
-  if (text && popover) el.showPopover();
+  if (popover) {
+    try {
+      if (el.matches(':popover-open')) el.hidePopover();
+      if (text) el.showPopover();
+    } catch { /* 古いブラウザは通常表示 */ }
+  }
   el.classList.toggle('show', Boolean(text));
   if (text && ms) {
     toastTimer = setTimeout(() => {
       el.classList.remove('show');
-      if (popover && el.matches(':popover-open')) el.hidePopover();
+      try { if (popover && el.matches(':popover-open')) el.hidePopover(); } catch { /* 同上 */ }
     }, ms);
   }
 }
