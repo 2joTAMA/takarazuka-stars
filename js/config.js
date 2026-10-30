@@ -19,10 +19,13 @@ export const STATUSES = [
   { id: 'topMusume', label: 'トップ娘役' },
   { id: 'kumicho', label: '組長' },
   { id: 'fukuKumicho', label: '副組長' },
-  { id: 'shinko', label: '新公主演', musume: '新公ヒロイン' },
-  { id: 'bow', label: 'バウ主演', musume: 'バウヒロイン' },
   { id: 'tojo', label: '東上主演', musume: '東上ヒロイン' },
+  { id: 'bow', label: 'バウ主演', musume: 'バウヒロイン' },
+  { id: 'shinko', label: '新公主演', musume: '新公ヒロイン' },
 ];
+const STATUS_RANK = Object.fromEntries(STATUSES.map((s, i) => [s.id, i]));
+// 大きい肩書から順に並べる
+export const sortStatuses = ids => [...ids].sort((a, b) => (STATUS_RANK[a] ?? 99) - (STATUS_RANK[b] ?? 99));
 export const STATUS_BY_ID = Object.fromEntries(STATUSES.map(s => [s.id, s]));
 export const statusLabel = (id, role) => {
   const s = STATUS_BY_ID[id];

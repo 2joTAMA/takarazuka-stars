@@ -70,8 +70,9 @@ for (let term = Number(fromArg); term <= Number(toArg); term++) {
     if (shinko.has(name)) statuses.push('shinko');
     if (bow.has(name)) statuses.push('bow');
     if (tojo.has(name)) statuses.push('tojo');
+    const kana = clean(cells[1] || '').replace(/[\s　]+/g, ' ');
     stars.push({
-      name, term, order,
+      name, kana: /^[ぁ-ゖー・ ]+$/.test(kana) ? kana : undefined, term, order,
       role: roleRaw === '娘役' || /→娘役$/.test(roleRaw) ? 'musume' : 'otoko',
       troupe: history.at(-1) || null,
       history,
@@ -124,7 +125,7 @@ let seq = 0;
 const out = keep.map(s => {
   const r = {
     id: `s${(++seq).toString(36)}`,
-    name: s.name, term: s.term, order: s.order, role: s.role,
+    name: s.name, kana: s.kana, term: s.term, order: s.order, role: s.role,
     troupe: s.retired && s.topOf ? s.topOf.at(-1) : s.troupe,
     history: s.history,
     retired: s.retired === true ? 0 : s.retired,
@@ -132,6 +133,7 @@ const out = keep.map(s => {
   };
   if (r.history.length <= 1) delete r.history;
   if (r.retired === null) delete r.retired;
+  if (!r.kana) delete r.kana;
   return r;
 });
 fs.writeFileSync(outFile, JSON.stringify({

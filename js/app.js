@@ -1,8 +1,8 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=5';
-import * as store from './store.js?v=5';
+import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, sortStatuses, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=6';
+import * as store from './store.js?v=6';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 5;
+const APP_VERSION = 6;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -36,7 +36,7 @@ function isVisible(s) {
 function starHtml(s) {
   const cls = ['star', `role-${s.role}`, ...(s.statuses || []).map(st => `st-${st}`)];
   if (!isActive(s)) cls.push('is-retired');
-  const hist = view.history && s.history?.length > 1 ? `<span class="hist">(${historyText(s.history)})</span>` : '';
+  const hist = view.history && s.history?.length > 1 ? `<span class="hist">(${historyText(s.history).replaceAll('→', '→<wbr>')})</span>` : '';
   return `<span class="${cls.join(' ')}" data-id="${esc(s.id)}"><span class="nm">${esc(s.name)}</span>${hist}</span>`;
 }
 
@@ -49,7 +49,7 @@ function applyTheme() {
   if (view.theme === 'auto') delete root.dataset.theme;
   else root.dataset.theme = view.theme;
   const dark = view.theme === 'dark' || (view.theme === 'auto' && darkQuery.matches);
-  document.querySelector('meta[name="theme-color"]').content = dark ? '#3d1020' : '#7a1f3d';
+  document.querySelector('meta[name="theme-color"]').content = dark ? '#2e2770' : '#5b4bc4';
 }
 darkQuery.addEventListener?.('change', applyTheme);
 
@@ -163,8 +163,8 @@ function legendHtml() {
   const sample = (cls, text) => `<span class="star ${cls}"><span class="nm">${text}</span></span>`;
   return `<div class="legend">
     ${sample('st-top', 'トップ')}
-    ${sample('st-kumicho', '組長')}
-    ${sample('st-fukuKumicho', '副組長')}
+    ${sample('st-kumicho', '芸名')}
+    ${sample('st-fukuKumicho', '芸名')}
     ${sample('st-shinko', '新公主演・ヒロイン')}
     ${sample('st-top is-retired', '退団トップ')}
     ${view.split || view.mark === 'group' ? '' : `<span class="mark-${view.mark}">${sample('role-otoko', '男役')}${sample('role-musume', '娘役')}</span>`}
@@ -191,13 +191,15 @@ function openInfo(id) {
   const s = state.data.stars.find(x => x.id === id);
   if (!s) return;
   const row = (k, v) => v ? `<dt>${k}</dt><dd>${v}</dd>` : '';
-  const statuses = (s.statuses || []).map(st => statusLabel(st, s.role)).join('、');
+  const statuses = sortStatuses(s.statuses || []).map(st => statusLabel(st, s.role)).join('、');
+  const dot = `<span class="role-dot role-${s.role}"></span>`;
   $('#info-body').innerHTML = `
-    <h2 class="info-name">${starHtml({ ...s, history: [] })}</h2>
+    ${s.kana ? `<div class="info-kana">${esc(s.kana)}</div>` : ''}
+    <h2 class="info-name">${dot}${starHtml({ ...s, history: [] })}</h2>
     <dl class="info">
       ${row('期', `${s.term}期（研${kenOf(s.term)}）`)}
       ${row('組', s.troupe ? TROUPE_BY_ID[s.troupe].name : '未配属')}
-      ${row('役柄', ROLES.find(r => r.id === s.role)?.name)}
+      ${row('役柄', dot + ROLES.find(r => r.id === s.role)?.name)}
       ${row('組替え', s.history?.length > 1 ? historyText(s.history) : '')}
       ${row('ステータス', esc(statuses))}
       ${row('退団', isActive(s) ? '' : s.retired ? `${s.retired}年` : '退団')}
@@ -221,6 +223,7 @@ function openEditor(id, preset = {}) {
   editTarget = s;
   const f = form();
   f.name.value = s?.name ?? '';
+  f.kana.value = s?.kana ?? '';
   f.term.value = s?.term ?? preset.term ?? '';
   f.troupe.value = s ? s.troupe ?? '' : preset.troupe ?? '';
   f.troupe.dataset.prev = f.troupe.value;
@@ -259,11 +262,12 @@ function applyEdit() {
   if (troupe && history.length && history.at(-1) !== troupe) history.push(troupe);
   const rec = {
     name: f.name.value.trim(),
+    kana: f.kana.value.trim() || undefined,
     term,
     role: f.role.value,
     troupe,
     history: history.length > 1 ? history : undefined,
-    statuses: [...document.querySelectorAll('#edit-statuses input:checked')].map(cb => cb.value),
+    statuses: sortStatuses([...document.querySelectorAll('#edit-statuses input:checked')].map(cb => cb.value)),
     retired: f.retiredFlag.checked || f.retiredYear.value ? Number(f.retiredYear.value) || 0 : undefined,
     note: f.note.value.trim() || undefined,
   };

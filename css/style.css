@@ -7,8 +7,9 @@
   --muted: #877c81;
   --line: #e7dfda;
   --line-strong: #b9aca6;
-  --accent: #7a1f3d;
-  --accent-2: #9b2b52;
+  --accent: #5b4bc4;
+  --accent-2: #6a5ad8;
+  --c-badge: #5b4bc4;
   --on-accent: #ffffff;
   --shadow: 0 1px 2px rgba(40, 20, 30, .06), 0 4px 16px rgba(40, 20, 30, .06);
 
@@ -45,8 +46,9 @@
     --muted: #a0959a;
     --line: #342d31;
     --line-strong: #5f5559;
-    --accent: #5c1a31;
-    --accent-2: #7a2442;
+    --accent: #2e2770;
+    --accent-2: #4a3fb0;
+    --c-badge: #b4aaff;
     --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
     --c-top: #ff5c6c;
     --c-shinko: #52c77a;
@@ -66,8 +68,9 @@
   --muted: #a0959a;
   --line: #342d31;
   --line-strong: #5f5559;
-  --accent: #5c1a31;
-  --accent-2: #7a2442;
+  --accent: #2e2770;
+  --accent-2: #4a3fb0;
+  --c-badge: #b4aaff;
   --shadow: 0 1px 2px rgba(0, 0, 0, .4), 0 4px 16px rgba(0, 0, 0, .3);
   --c-top: #ff5c6c;
   --c-shinko: #52c77a;
@@ -109,7 +112,7 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
   align-items: center;
   gap: 8px;
   padding: calc(env(safe-area-inset-top) + 10px) 14px 10px;
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  background-color: var(--accent);
   color: var(--on-accent);
 }
 .bar h1 {
@@ -249,7 +252,7 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 
 .cell { min-width: 5.5em; }
 .cell .star { display: block; white-space: nowrap; }
-.hist { display: block; font-size: .75em; color: var(--muted); font-weight: 400; }
+.hist { display: block; max-width: 8em; font-size: .75em; color: var(--muted); font-weight: 400; white-space: normal; line-height: 1.3; }
 
 .un-cell { white-space: normal; background: var(--surface-2) !important; }
 .un-cell .star { display: inline-block; margin-right: 1em; }
@@ -272,8 +275,20 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 /* ---- 名前の見た目（ステータス） ---- */
 .star.st-shinko { color: var(--c-shinko); }
 .star.st-top, .star.st-topMusume { color: var(--c-top); font-weight: 700; }
-.star.st-kumicho .nm::after { content: "**"; }
-.star.st-fukuKumicho .nm::after { content: "*"; }
+.star.st-kumicho .nm::after, .star.st-fukuKumicho .nm::after {
+  content: "組長";
+  display: inline-block;
+  margin-left: .3em;
+  padding: 0 .35em;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--c-badge) 15%, transparent);
+  color: var(--c-badge);
+  font-size: .68em;
+  font-weight: 700;
+  line-height: 1.55;
+  vertical-align: .12em;
+}
+.star.st-fukuKumicho .nm::after { content: "副組長"; }
 .star.is-retired { color: var(--c-retired); font-weight: 400; }
 
 /* 男役・娘役をまとめたときの見分け方 */
@@ -449,7 +464,12 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 }
 .sheet-foot .spacer { flex: 1; }
 
-.info-name { font-size: 22px !important; }
+.info-name { display: flex; align-items: center; gap: 8px; margin-top: 0 !important; font-size: 22px !important; }
+.info-kana { margin-top: 6px; color: var(--muted); font-size: 13px; letter-spacing: .08em; }
+.role-dot { display: inline-block; width: .55em; height: .55em; margin-right: .35em; border-radius: 50%; vertical-align: .1em; }
+.info-name .role-dot { margin-right: 0; }
+.role-dot.role-otoko { background: var(--c-otoko); }
+.role-dot.role-musume { background: var(--c-musume); }
 .info { display: grid; grid-template-columns: auto 1fr; gap: 8px 16px; margin: 0 0 8px; font-size: 14px; }
 .info dt { color: var(--muted); }
 .info dd { margin: 0; }
@@ -512,3 +532,19 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
   font-weight: 600;
 }
 .badge[data-ok="true"] { background: color-mix(in srgb, var(--c-shinko) 16%, var(--surface)); color: var(--c-shinko); }
+
+/* シート上部の見出しと閉じるボタン */
+.sheet-head {
+  position: sticky;
+  top: -8px;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin: -8px -18px 4px;
+  padding: 14px 18px 10px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+.sheet-head h2 { margin: 0 !important; font-size: 18px; }
+#dlg-settings form::before { display: none; }
