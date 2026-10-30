@@ -577,15 +577,22 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
   border-top: 1px solid var(--line);
 }
 .w-year { color: var(--muted); }
+/* ラベルは3文字分の幅に固定し、4文字（ヒロイン）は文字を小さくして収める */
 .w-tag {
   justify-self: start;
-  padding: 1px 7px;
+  box-sizing: border-box;
+  width: 46px;
+  padding: 1px 0;
   border-radius: 999px;
   background: var(--surface-2);
   font-size: 11px;
   font-weight: 700;
+  line-height: 16px;
+  text-align: center;
   white-space: nowrap;
+  overflow: hidden;
 }
+.w-tag.long { font-size: 8.5px; letter-spacing: -.02em; }
 .w-tag.k-shinko { background: color-mix(in srgb, var(--c-shinko) 16%, transparent); color: var(--c-shinko); }
 .w-tag.k-bow, .w-tag.k-tojo, .w-tag.k-tour, .w-tag.k-lead { background: color-mix(in srgb, var(--c-badge) 15%, transparent); color: var(--c-badge); }
 .w-tag.k-top { background: color-mix(in srgb, var(--c-top) 14%, transparent); color: var(--c-top); }

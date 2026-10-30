@@ -56,13 +56,14 @@ function stageLines(txt) {
 }
 
 const titlesOf = s => [...s.matchAll(/『([^』]+)』/g)].map(m => m[1].trim());
-// 劇場名の略称（ドラマシティ・梅芸メインホール・赤坂ACTシアターだけ。ほかは書かれたまま）
+// 劇場名の略称（ドラマシティ・梅芸メインホール・赤坂ACTシアター・バウだけ。ほかは書かれたまま）
 const VENUE_ABBR = [
   // 「シアター・ドラマシティ」は中点で区切られるので、区切る前に置き換える
   // 「赤坂ACTシアター・ドラマシティ」は2つの劇場なので、ACT の直後は置き換えない
   [/梅田芸術劇場 ?シアター・?ドラマシティ|(?<!ACT ?)シアター・?ドラマシティ/g, 'ドラマシティ'],
   [/梅田芸術劇場 ?(メインホール)?(?! ?シアター)/g, '梅芸メインホール'],
   [/TBS ?赤坂ACTシアター/g, '赤坂ACTシアター'],
+  [/(宝塚)?バウホール/g, 'バウ'],
 ];
 const shortVenue = v => {
   // 空白は Wikipedia の書き方のまま残す（例: 東京建物 Brillia HALL）
@@ -151,7 +152,9 @@ for (const s of targets) {
         const at = c.indexOf('新人公演：');
         t = titlesOf(at >= 0 ? c.slice(0, at) : c).at(-1);
       } else t = titlesOf(c)[0];
-      if (t) works.push({ y, t, k, g: entries[i].g, v: k === 'lead' || k === 'tojo' ? venueOf(c) : undefined });
+      // 大劇場主演・ヒロイン（トップ就任前の役替わりなど）は会場を「大劇場」とし、印がヒロインかどうかを h に残す
+      const h = k === 'grand' && marks.some(m => /大劇場ヒロイン/.test(m)) ? 1 : undefined;
+      if (t) works.push({ y, t, k, g: entries[i].g, h, v: k === 'grand' ? '大劇場' : k === 'lead' || k === 'tojo' ? venueOf(c) : undefined });
     }
   });
   // 同じ作品がバウと東上で別々の行に書かれているときも、東上の1行にまとめる
@@ -159,7 +162,7 @@ for (const s of targets) {
     const [a, b] = [works[i - 1], works[i]];
     if (a.t === b.t && [a.k, b.k].includes('bow') && [a.k, b.k].includes('tojo')) works.splice(a.k === 'bow' ? i - 1 : i, 1);
   }
-  for (const w of works) { if (!w.v) delete w.v; if (!w.g) delete w.g; }
+  for (const w of works) { if (!w.v) delete w.v; if (!w.g) delete w.g; if (!w.h) delete w.h; }
   if (works.length) { s.works = works; withWorks++; }
 }
 

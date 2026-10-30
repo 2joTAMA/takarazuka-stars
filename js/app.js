@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=12';
-import * as store from './store.js?v=12';
-import { ICONS } from './icons.js?v=12';
+import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=13';
+import * as store from './store.js?v=13';
+import { ICONS } from './icons.js?v=13';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 12;
+const APP_VERSION = 13;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -221,22 +221,24 @@ function setFocus(id, exact = false) {
 }
 
 // ---- 閲覧用の詳細 ----
-const WORK_TAG = { shinko: '新公', bow: 'バウ', tojo: '東上', tour: '全ツ', grand: '大劇場', top: 'トップ' };
+const WORK_TAG = { shinko: '新公', bow: 'バウ', tojo: '東上', tour: '全ツ', top: 'トップ' };
 // バウでも東上でもない主演作（ドラマシティだけ、など）は、1つの劇場ならその略称をラベルにする
 const VENUE_TAG = {
-  'ドラマシティ': 'DC', '梅芸メインホール': '梅芸', 'バウホール': 'バウ', '宝塚バウホール': 'バウ',
+  'ドラマシティ': 'DC', '梅芸メインホール': '梅芸', 'バウ': 'バウ',
   '博多座': '博多座', '御園座': '御園座', '中日劇場': '中日', '日生劇場': '日生', '全国ツアー': '全ツ',
 };
 function worksHtml(s) {
   if (!s.works?.length) return '';
   let prev = null;
   const items = s.works.map(w => {
-    const tag = WORK_TAG[w.k] ?? VENUE_TAG[w.v] ?? (s.role === 'musume' ? 'ヒロイン' : '主演');
+    // 大劇場主演・ヒロインは会場に「大劇場」と出し、ラベルは主演／ヒロイン（男役が女役でヒロインを務めた例もあるので印に従う）
+    const lead = (w.k === 'grand' ? w.h : s.role === 'musume') ? 'ヒロイン' : '主演';
+    const tag = WORK_TAG[w.k] ?? (w.k === 'grand' ? lead : VENUE_TAG[w.v] ?? lead);
     const venue = w.v ?? (w.k === 'top' ? '大劇場' : '');
     // 組が変わったところ（初めの組・組替え）に組名の見出しを入れる
     const head = w.g && w.g !== prev ? `<li class="w-group t-${w.g}">${TROUPE_BY_ID[w.g].name}</li>` : '';
     prev = w.g || prev;
-    return `${head}<li><span class="w-year">${w.y}</span><span class="w-tag k-${w.k}">${tag}</span><span class="w-title">${esc(w.t)}${venue ? `<small>${esc(venue)}</small>` : ''}</span></li>`;
+    return `${head}<li><span class="w-year">${w.y}</span><span class="w-tag k-${w.k}${tag.length > 3 ? ' long' : ''}">${tag}</span><span class="w-title">${esc(w.t)}${venue ? `<small>${esc(venue)}</small>` : ''}</span></li>`;
   }).join('');
   return `<h3 class="info-sub">主演作品</h3><ul class="works">${items}</ul>`;
 }
