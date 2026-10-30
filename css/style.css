@@ -145,33 +145,57 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
   font-weight: 700;
 }
 
-/* ---- 組の切り替え ---- */
+/* ---- 組の切り替え（画面下に浮かぶメニュー） ---- */
 .tabs {
+  position: fixed;
+  left: 10px;
+  right: 10px;
+  bottom: calc(env(safe-area-inset-bottom) + 8px);
+  z-index: 6;
   display: flex;
-  gap: 6px;
-  padding: 8px 10px;
-  overflow-x: auto;
-  background: var(--surface);
-  border-bottom: 1px solid var(--line);
-  scrollbar-width: none;
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 5px;
+  border: 1px solid color-mix(in srgb, var(--line-strong) 35%, transparent);
+  border-radius: 24px;
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  box-shadow: 0 8px 28px rgba(20, 10, 40, .18);
+  -webkit-backdrop-filter: blur(18px) saturate(1.6);
+  backdrop-filter: blur(18px) saturate(1.6);
 }
-.tabs::-webkit-scrollbar { display: none; }
 .tab {
-  flex: 1 0 auto;
-  min-width: 46px;
-  padding: 7px 10px;
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 6px 0 5px;
   border: 0;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--tc) var(--tint), var(--surface));
-  color: var(--fg);
-  font-size: 13px;
+  border-radius: 19px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 11px;
   font-weight: 600;
-  white-space: nowrap;
   cursor: pointer;
-  transition: background .15s, color .15s;
 }
-.tab[aria-pressed="true"] { background: var(--tc); color: var(--tc-on); }
-.tab:not(.t-hana, .t-tsuki, .t-yuki, .t-hoshi, .t-sora, .t-senka) { --tc: var(--fg); --tc-on: var(--bg); }
+.tab .ic { width: 22px; height: 22px; }
+/* 区切り線（選択中とその隣は消す） */
+.tab + .tab::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 22%;
+  bottom: 22%;
+  border-left: 1px solid var(--line);
+}
+.tab[aria-pressed="true"]::before, .tab[aria-pressed="true"] + .tab::before { display: none; }
+.tab[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--tc) 18%, transparent);
+  color: color-mix(in srgb, var(--tc) 78%, var(--fg));
+}
+.t-all { --tc: var(--accent-2); }
 .t-hana { --tc: var(--t-hana); --tc-on: #fff; }
 .t-tsuki { --tc: var(--t-tsuki); --tc-on: #2e2200; }
 .t-yuki { --tc: var(--t-yuki); --tc-on: #fff; }
@@ -186,7 +210,7 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
   overflow: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: env(safe-area-inset-bottom);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 86px);
 }
 .loading { padding: 24px 16px; color: var(--muted); }
 
@@ -275,21 +299,24 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 /* ---- 名前の見た目（ステータス） ---- */
 .star.st-shinko { color: var(--c-shinko); }
 .star.st-top, .star.st-topMusume { color: var(--c-top); font-weight: 700; }
-.star.st-kumicho::after, .star.st-fukuKumicho::after {
-  content: "組長";
-  display: block;
-  width: fit-content;
-  margin: .1em 0 .15em;
-  padding: 0 .35em;
+.star.st-kumicho .nm::after, .star.st-fukuKumicho .nm::after, .lg-badge {
+  content: "組";
+  display: inline-block;
+  margin-left: .25em;
+  padding: 0 .28em;
   border-radius: 4px;
   background: color-mix(in srgb, var(--c-badge) 15%, transparent);
   color: var(--c-badge);
-  font-size: .68em;
+  font-size: .72em;
   font-weight: 700;
-  line-height: 1.55;
+  line-height: 1.5;
+  vertical-align: .1em;
 }
-.star.st-fukuKumicho::after { content: "副組長"; }
-.legend .star::after, .info-name .star::after { display: inline-block; margin: 0 0 0 .4em; vertical-align: .15em; }
+.star.st-fukuKumicho .nm::after { content: "副"; }
+.info-name .st-kumicho .nm::after { content: "組長"; }
+.info-name .st-fukuKumicho .nm::after { content: "副組長"; }
+.lg { display: inline-flex; align-items: center; gap: .3em; }
+.lg-badge { margin: 0; }
 .star.is-retired { color: var(--c-retired); font-weight: 400; }
 
 /* 男役・娘役をまとめたときの見分け方 */
@@ -480,7 +507,7 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
   position: fixed;
   inset: auto;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom) + 20px);
+  bottom: calc(env(safe-area-inset-bottom) + 92px);
   z-index: 10;
   max-width: calc(100vw - 32px);
   margin: 0;
@@ -556,3 +583,33 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 @keyframes slide-from-left { from { transform: translateX(-24px); opacity: .3; } to { transform: none; opacity: 1; } }
 .grid.slide-from-right { animation: slide-from-right .18s ease-out; }
 .grid.slide-from-left { animation: slide-from-left .18s ease-out; }
+
+/* ヘッダーのアイコン付きボタン */
+.bar .btn { display: inline-flex; align-items: center; gap: 5px; }
+.bar .btn .ic { width: 16px; height: 16px; }
+
+/* 主演作品 */
+.info-sub { margin: 16px 0 8px; font-size: 14px; color: var(--muted); }
+.works { margin: 0; padding: 0; list-style: none; font-size: 14px; }
+.works li {
+  display: grid;
+  grid-template-columns: 2.9em 3.6em 1fr;
+  align-items: baseline;
+  gap: 6px;
+  padding: 6px 0;
+  border-top: 1px solid var(--line);
+}
+.w-year { color: var(--muted); }
+.w-tag {
+  justify-self: start;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.w-tag.k-shinko { background: color-mix(in srgb, var(--c-shinko) 16%, transparent); color: var(--c-shinko); }
+.w-tag.k-bow, .w-tag.k-tojo, .w-tag.k-tour, .w-tag.k-lead { background: color-mix(in srgb, var(--c-badge) 15%, transparent); color: var(--c-badge); }
+.w-tag.k-top { background: color-mix(in srgb, var(--c-top) 14%, transparent); color: var(--c-top); }
+.w-title small { display: block; color: var(--muted); font-size: 11px; }

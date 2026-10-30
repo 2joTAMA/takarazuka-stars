@@ -9,6 +9,7 @@
 | `index.html` / `css/` / `js/` | アプリ本体（ビルド不要の素の HTML/JS） |
 | `data/stars.json` | 生徒データ（1人1行） |
 | `tools/import-wikipedia.mjs` | Wikipedia から初期データを作るスクリプト（最初の1回用） |
+| `tools/import-works.mjs` | Wikipedia の個人ページから主演作品（`works`）を取り込むスクリプト |
 
 ## 公開の手順（最初の1回）
 
@@ -43,5 +44,7 @@
 - `troupe`: `hana` `tsuki` `yuki` `hoshi` `sora` `senka`、未配属は `null`
 - `history`: 組替え履歴（例 `["tsuki","sora","hana"]`）
 - `retired`: 退団年（現役なら項目なし、年不明は `0`）
-- `statuses`: `top` `topMusume` `kumicho` `fukuKumicho` `shinko` `bow`
+- `kana`: ふりがな
+- `statuses`: `top` `topMusume` `kumicho` `fukuKumicho` `tojo` `bow` `shinko`
+- `works`: 主演作品 `[{y: 初日の年, t: 作品名, k: shinko|bow|tojo|tour|top|lead, v?: 会場}]`
 - 名前の見た目は `css/style.css` の「名前の見た目（ステータス）」で決めている
