@@ -1,6 +1,6 @@
 {
-  "name": "宝塚スター一覧",
-  "short_name": "スター一覧",
+  "name": "宝塚スター",
+  "short_name": "宝塚スター",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

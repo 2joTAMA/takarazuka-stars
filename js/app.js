@@ -1,15 +1,18 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, STATUS_BY_ID, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=3';
-import * as store from './store.js?v=3';
+import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, STATUS_BY_ID, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=4';
+import * as store from './store.js?v=4';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 3;
+const APP_VERSION = 4;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // ---- 表示設定（この端末だけ） ----
 const LS_VIEW = 'tz.view';
-const view = { split: true, retired: 'tops', allTerms: false, history: true, size: 'm', focus: null, ...readView() };
+const view = {
+  split: true, mark: 'dots', retired: 'tops', allTerms: false, history: true, size: 'm', theme: 'auto', focus: null,
+  ...readView(),
+};
 function readView() {
   try { return JSON.parse(localStorage.getItem(LS_VIEW)) || {}; } catch { return {}; }
 }
@@ -35,7 +38,21 @@ function starHtml(s) {
   return `<span class="${cls.join(' ')}" data-id="${esc(s.id)}"><span class="nm">${esc(s.name)}</span>${hist}</span>`;
 }
 
+const kenHtml = n => `<span class="ken"><small>研</small>${n}</span>`;
+const nin = n => `${n}<small class="unit">人</small>`;
+
+const darkQuery = matchMedia('(prefers-color-scheme: dark)');
+function applyTheme() {
+  const root = document.documentElement;
+  if (view.theme === 'auto') delete root.dataset.theme;
+  else root.dataset.theme = view.theme;
+  const dark = view.theme === 'dark' || (view.theme === 'auto' && darkQuery.matches);
+  document.querySelector('meta[name="theme-color"]').content = dark ? '#3d1020' : '#7a1f3d';
+}
+darkQuery.addEventListener?.('change', applyTheme);
+
 function render() {
+  applyTheme();
   document.body.dataset.size = view.size;
   document.body.classList.toggle('editing', state.editing);
   renderTabs();
@@ -53,7 +70,13 @@ function render() {
     if (!cells.has(key)) cells.set(key, []);
     cells.get(key).push(s);
   }
-  for (const list of cells.values()) list.sort((a, b) => a.order - b.order);
+  const grouped = !view.split && view.mark === 'group';
+  const roleRank = s => (grouped && s.role === 'musume' ? 1 : 0);
+  for (const list of cells.values()) list.sort((a, b) => roleRank(a) - roleRank(b) || a.order - b.order);
+  // 「まとめる」+「男役→娘役の順」のときは間に区切り線を入れる
+  const cellStars = list => list.map((s, i) =>
+    (grouped && i > 0 && s.troupe && roleRank(s) !== roleRank(list[i - 1]) ? '<span class="role-sep"></span>' : '') + starHtml(s)
+  ).join('');
 
   const activeTerms = new Set(active.map(s => s.term));
   const terms = [...new Set(stars.map(s => s.term))]
@@ -69,7 +92,7 @@ function render() {
   const countIn = (termSet, troupe, role) =>
     active.filter(s => termSet.has(s.term) && s.troupe === troupe && (!role || s.role === role)).length;
 
-  let h = `<table class="grid ${split ? 'split' : 'merged'}${view.focus ? ' focus' : ''}"><thead><tr class="h1">`;
+  let h = `<table class="grid ${split ? 'split' : `merged mark-${view.mark}`}${view.focus ? ' focus' : ''}"><thead><tr class="h1">`;
   const rs = split ? ' rowspan="2"' : '';
   h += `<th class="c-term"${rs}>期</th><th class="c-ken"${rs}>研</th>`;
   for (const t of troupes) {
@@ -85,19 +108,28 @@ function render() {
 
   const termRows = term => {
     const termActive = active.filter(s => s.term === term).length;
-    h += `<tr><th class="c-term">${term}</th><td class="c-ken">${kenOf(term, now)}</td>`;
+    const head = `<th class="c-term">${term}</th><td class="c-ken">${kenHtml(kenOf(term, now))}</td>`;
+    const sum = `<td class="c-sum">${termActive ? nin(termActive) : ''}</td>`;
+    const unassigned = cells.get(cellKey(term, null, null)) || [];
+    const unassignedCell = label =>
+      `<td class="cell un-cell" colspan="${colCount}" data-term="${term}" data-troupe="" data-role=""><span class="un-label">${label}</span>${cellStars(unassigned)}${addBtn}</td>`;
+    const hasAssigned = troupes.some(t => roles.some(r => cells.get(cellKey(term, t.id, r))?.length));
+    // 期の全員が未配属（組まわり中）なら、その期の行に組を横断して並べる
+    if (unassigned.length && !hasAssigned) {
+      h += `<tr class="unassigned">${head}${unassignedCell('未配属（組まわり中）')}${sum}</tr>`;
+      return;
+    }
+    h += `<tr>${head}`;
     for (const t of troupes) {
       for (const r of roles) {
         const list = cells.get(cellKey(term, t.id, r)) || [];
         const tend = !r || r === 'musume' ? ' tend' : '';
-        h += `<td class="cell t-${t.id}${r ? ` r-${r}` : ''}${tend}" data-term="${term}" data-troupe="${t.id}" data-role="${r ?? ''}">${list.map(starHtml).join('')}${addBtn}</td>`;
+        h += `<td class="cell t-${t.id}${r ? ` r-${r}` : ''}${tend}" data-term="${term}" data-troupe="${t.id}" data-role="${r ?? ''}">${cellStars(list)}${addBtn}</td>`;
       }
     }
-    h += `<td class="c-sum">${termActive || ''}</td></tr>`;
-    const unassigned = cells.get(cellKey(term, null, null));
-    if (unassigned?.length) {
-      h += `<tr class="unassigned"><th class="c-term"></th><td class="c-ken"></td>`;
-      h += `<td class="cell" colspan="${colCount}" data-term="${term}" data-troupe="" data-role=""><span class="un-label">${term}期 未配属</span>${unassigned.map(starHtml).join('')}${addBtn}</td><td class="c-sum"></td></tr>`;
+    h += `${sum}</tr>`;
+    if (unassigned.length) {
+      h += `<tr class="unassigned"><th class="c-term"></th><td class="c-ken"></td>${unassignedCell(`${term}期 未配属`)}<td class="c-sum"></td></tr>`;
     }
   };
   const subtotal = (list, label, cls) => {
@@ -105,12 +137,12 @@ function render() {
     const total = active.filter(s => set.has(s.term)).length;
     h += `<tr class="sub ${cls}"><th class="c-term" colspan="2"${rs}>${label}</th>`;
     for (const t of troupes) for (const r of roles) {
-      h += `<td class="${!r || r === 'musume' ? 'tend' : ''}">${countIn(set, t.id, r)}</td>`;
+      h += `<td class="${!r || r === 'musume' ? 'tend' : ''}">${nin(countIn(set, t.id, r))}</td>`;
     }
-    h += `<td class="c-sum"${rs}>${total}</td></tr>`;
+    h += `<td class="c-sum"${rs}>${nin(total)}</td></tr>`;
     if (split) {
       h += `<tr class="sub sub2 ${cls}">`;
-      for (const t of troupes) h += `<td class="tend" colspan="2">${countIn(set, t.id, null)}</td>`;
+      for (const t of troupes) h += `<td class="tend" colspan="2">${nin(countIn(set, t.id, null))}</td>`;
       h += '</tr>';
     }
   };
@@ -133,7 +165,7 @@ function legendHtml() {
     ${sample('st-fukuKumicho', '副組長')}
     ${sample('st-shinko', '新公主演')}
     ${sample('st-top is-retired', '退団トップ')}
-    ${view.split ? '' : sample('role-musume', '娘役')}
+    ${view.split || view.mark === 'group' ? '' : `<span class="mark-${view.mark}">${sample('role-otoko', '男役')}${sample('role-musume', '娘役')}</span>`}
     <span class="legend-note">研${SHINKO_MAX_KEN}までが新人公演の対象</span>
   </div>`;
 }
@@ -322,6 +354,9 @@ function openSettings() {
   f.allTerms.value = view.allTerms ? '1' : '0';
   f.history.value = view.history ? '1' : '0';
   f.size.value = view.size;
+  f.mark.value = view.mark;
+  f.theme.value = view.theme;
+  $('#mark-field').hidden = view.split;
   const cfg = store.getConfig();
   $('#cfg-owner').value = cfg.owner;
   $('#cfg-repo').value = cfg.repo;
@@ -346,7 +381,8 @@ function bindSettings() {
   $('#dlg-settings').addEventListener('change', e => {
     const { name, value } = e.target;
     if (!(name in view) || e.target.closest('.field-input')) return;
-    view[name] = name === 'retired' || name === 'size' ? value : value === '1';
+    view[name] = value === '1' ? true : value === '0' ? false : value;
+    $('#mark-field').hidden = view.split;
     saveView();
     render();
   });
@@ -460,6 +496,7 @@ function bindUi() {
 }
 
 async function init() {
+  applyTheme();
   bindUi();
   const draft = store.loadDraft();
   try {
