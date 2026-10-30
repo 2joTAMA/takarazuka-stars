@@ -1,8 +1,8 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, sortStatuses, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=6';
-import * as store from './store.js?v=6';
+import { TROUPES, TROUPE_BY_ID, ROLES, STATUSES, statusLabel, sortStatuses, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=7';
+import * as store from './store.js?v=7';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 6;
+const APP_VERSION = 7;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -179,6 +179,35 @@ function renderTabs() {
   ).join('');
 }
 
+// 組別表示のときは左右スワイプで隣の組へ（指を右へ→次の組、左へ→前の組。全体からは移らない）
+function bindSwipe() {
+  const wrap = $('#wrap');
+  let start = null;
+  wrap.addEventListener('touchstart', e => {
+    start = view.focus && e.touches.length === 1
+      ? { x: e.touches[0].clientX, y: e.touches[0].clientY, t: Date.now() }
+      : null;
+  }, { passive: true });
+  wrap.addEventListener('touchend', e => {
+    if (!start) return;
+    const p = e.changedTouches[0];
+    const dx = p.clientX - start.x;
+    const dy = p.clientY - start.y;
+    const quick = Date.now() - start.t < 700;
+    start = null;
+    if (!quick || Math.abs(dx) < 60 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+    const order = [null, ...TROUPES.map(t => t.id)];
+    const next = order[order.indexOf(view.focus) + (dx > 0 ? 1 : -1)];
+    if (next === undefined) return;
+    view.focus = next;
+    saveView();
+    render();
+    const grid = wrap.querySelector('.grid');
+    grid?.classList.add(dx > 0 ? 'slide-from-left' : 'slide-from-right');
+    document.querySelector('.tab[aria-pressed="true"]')?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  });
+}
+
 function setFocus(id) {
   view.focus = id && view.focus !== id ? id : null;
   saveView();
@@ -194,8 +223,7 @@ function openInfo(id) {
   const statuses = sortStatuses(s.statuses || []).map(st => statusLabel(st, s.role)).join('、');
   const dot = `<span class="role-dot role-${s.role}"></span>`;
   $('#info-body').innerHTML = `
-    ${s.kana ? `<div class="info-kana">${esc(s.kana)}</div>` : ''}
-    <h2 class="info-name">${dot}${starHtml({ ...s, history: [] })}</h2>
+    <div class="info-head">${dot}<div>${s.kana ? `<div class="info-kana">${esc(s.kana)}</div>` : ''}<h2 class="info-name">${starHtml({ ...s, history: [] })}</h2></div></div>
     <dl class="info">
       ${row('期', `${s.term}期（研${kenOf(s.term)}）`)}
       ${row('組', s.troupe ? TROUPE_BY_ID[s.troupe].name : '未配属')}
@@ -512,6 +540,7 @@ function bindUi() {
     dlg.addEventListener('click', e => { if (e.target === dlg) dlg.close(); });
   }
   bindSettings();
+  bindSwipe();
 }
 
 async function init() {
