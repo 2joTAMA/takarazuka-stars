@@ -356,7 +356,6 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 }
 .legend .star { display: inline; }
 .legend > span { display: inline-flex; gap: 14px; }
-.legend-note { color: var(--muted); }
 
 .cell .star[data-id] { cursor: pointer; }
 

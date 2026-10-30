@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=18';
-import * as store from './store.js?v=18';
-import { ICONS } from './icons.js?v=18';
+import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=19';
+import * as store from './store.js?v=19';
+import { ICONS } from './icons.js?v=19';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 18;
+const APP_VERSION = 19;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -170,9 +170,7 @@ function legendHtml() {
     <span class="lg"><span class="lg-badge">組</span>組長</span>
     <span class="lg"><span class="lg-badge">副</span>副組長</span>
     ${sample('st-shinko', '新公主演・ヒロイン')}
-    ${sample('st-top is-retired', '退団トップ')}
     ${view.split ? '' : `<span class="mark-${view.mark}">${sample('role-otoko', '男役')}${sample('role-musume', '娘役')}</span>`}
-    <span class="legend-note">研${SHINKO_MAX_KEN}までが新人公演の対象</span>
   </div>`;
 }
 
