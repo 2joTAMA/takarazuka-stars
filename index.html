@@ -16,14 +16,15 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=13">
-  <script type="module" src="js/app.js?v=13"></script>
+  <link rel="stylesheet" href="css/style.css?v=14">
+  <script type="module" src="js/app.js?v=14"></script>
 </head>
 <body>
   <div id="screen">
   <header class="bar">
     <h1>宝塚スター</h1>
     <div class="bar-actions">
+      <button id="btn-theme" class="btn btn-icon" aria-label="ライト・ダークの切り替え"></button>
       <button id="btn-settings" class="btn" aria-label="設定">設定</button>
     </div>
   </header>
@@ -47,14 +48,6 @@
         <div class="seg" data-setting="split">
           <label><input type="radio" name="split" value="1"><span>分ける</span></label>
           <label><input type="radio" name="split" value="0"><span>まとめる</span></label>
-        </div>
-      </div>
-      <div class="field" id="mark-field">
-        <span class="label">まとめたときの見分け方</span>
-        <div class="seg" data-setting="mark">
-          <label><input type="radio" name="mark" value="dots"><span>両方に点</span></label>
-          <label><input type="radio" name="mark" value="tint"><span>娘役に背景色</span></label>
-          <label><input type="radio" name="mark" value="group"><span>男役→娘役の順</span></label>
         </div>
       </div>
       <div class="field">
@@ -94,15 +87,6 @@
           <label><input type="radio" name="size" value="l"><span>大</span></label>
         </div>
       </div>
-      <div class="field">
-        <span class="label">画面の明るさ</span>
-        <div class="seg" data-setting="theme">
-          <label><input type="radio" name="theme" value="auto"><span>端末に合わせる</span></label>
-          <label><input type="radio" name="theme" value="light"><span>ライト</span></label>
-          <label><input type="radio" name="theme" value="dark"><span>ダーク</span></label>
-        </div>
-      </div>
-
       <h2>データ</h2>
       <p class="note" id="data-source"></p>
       <div class="row-buttons">

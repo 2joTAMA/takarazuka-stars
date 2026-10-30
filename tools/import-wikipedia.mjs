@@ -112,6 +112,8 @@ for (const [tid, title] of Object.entries(TROUPE_PAGES)) {
   } else console.warn('組長が読めない', tid);
   for (const [heading, st] of [['歴代トップスター', 'top'], ['歴代トップ娘役', 'topMusume']]) {
     for (const m of section(txt, heading).matchAll(/^\*\s*(\[\[[^\]]*\]\])/gm)) {
+      // 「[[瀧川末子 (初代)|瀧川末子]]」のように芸名を継いだ別人（初代など）は同名でも別の人
+      if (/\((初代|[0-9一二三四五六七八九十]+代目)\)/.test(m[1])) continue;
       const s = byName.get(clean(m[1]));
       if (!s) continue;
       add(s, st);
@@ -127,7 +129,7 @@ const out = keep.map(s => {
   const r = {
     id: `${s.term}-${s.order}`, // 期と期内の順番から作るので、取り込み直しても変わらない
     name: s.name, kana: s.kana, term: s.term, order: s.order, role: s.role,
-    troupe: s.retired && s.topOf ? s.topOf.at(-1) : s.troupe,
+    troupe: s.troupe ?? s.topOf?.at(-1) ?? null,
     history: s.history,
     retired: s.retired === true ? 0 : s.retired,
     statuses: [...s.statuses].sort((a, b) => RANK.indexOf(a) - RANK.indexOf(b)),

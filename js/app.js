@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=13';
-import * as store from './store.js?v=13';
-import { ICONS } from './icons.js?v=13';
+import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=14';
+import * as store from './store.js?v=14';
+import { ICONS } from './icons.js?v=14';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 13;
+const APP_VERSION = 14;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -11,11 +11,15 @@ const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': 
 // ---- 表示設定（この端末だけ） ----
 const LS_VIEW = 'tz.view';
 const view = {
-  split: true, mark: 'dots', retired: 'tops', senka: true, allTerms: false, history: true, size: 'm', theme: 'auto', focus: null,
+  split: false, mark: 'dots', retired: 'leads', senka: true, allTerms: false, history: true, size: 'm', theme: null, focus: null,
   ...readView(),
 };
-// 「全員」は廃止（退団者はトップしかデータが無いため）
-if (view.retired === 'all') view.retired = 'tops';
+// v14 で初期設定を「まとめる」「主演経験者」に変えたので、それより前の設定は一度だけ合わせる
+if ((view.ver ?? 0) < 14) Object.assign(view, { split: false, retired: 'leads', ver: 14 });
+// まとめたときの見分け方は「両方に点」だけにした
+view.mark = 'dots';
+// ライト・ダークはヘッダーのボタンで切り替えて覚えておく（初めて開いたときだけ端末の設定に合わせる）
+if (view.theme !== 'light' && view.theme !== 'dark') view.theme = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 function readView() {
   try { return JSON.parse(localStorage.getItem(LS_VIEW)) || {}; } catch { return {}; }
 }
@@ -50,15 +54,14 @@ function starHtml(s) {
 const kenHtml = n => `<span class="ken"><small>研</small>${n}</span>`;
 const nin = n => `${n}<small class="unit">人</small>`;
 
-const darkQuery = matchMedia('(prefers-color-scheme: dark)');
 function applyTheme() {
-  const root = document.documentElement;
-  if (view.theme === 'auto') delete root.dataset.theme;
-  else root.dataset.theme = view.theme;
-  const dark = view.theme === 'dark' || (view.theme === 'auto' && darkQuery.matches);
+  const dark = view.theme === 'dark';
+  document.documentElement.dataset.theme = view.theme;
   document.querySelector('meta[name="theme-color"]').content = dark ? '#2e2770' : '#5b4bc4';
+  // ボタンには押したあとのモードのマーク（ライトなら月、ダークなら太陽）
+  const btn = $('#btn-theme');
+  if (btn) btn.innerHTML = dark ? ICONS.sun : ICONS.moon;
 }
-darkQuery.addEventListener?.('change', applyTheme);
 
 function render() {
   applyTheme();
@@ -77,13 +80,8 @@ function render() {
     if (!cells.has(key)) cells.set(key, []);
     cells.get(key).push(s);
   }
-  const grouped = !view.split && view.mark === 'group';
-  const roleRank = s => (grouped && s.role === 'musume' ? 1 : 0);
-  for (const list of cells.values()) list.sort((a, b) => roleRank(a) - roleRank(b) || a.order - b.order);
-  // 「まとめる」+「男役→娘役の順」のときは間に区切り線を入れる
-  const cellStars = list => list.map((s, i) =>
-    (grouped && i > 0 && s.troupe && roleRank(s) !== roleRank(list[i - 1]) ? '<span class="role-sep"></span>' : '') + starHtml(s)
-  ).join('');
+  for (const list of cells.values()) list.sort((a, b) => a.order - b.order);
+  const cellStars = list => list.map(starHtml).join('');
 
   const activeTerms = new Set(active.map(s => s.term));
   const terms = [...new Set(stars.map(s => s.term))]
@@ -171,7 +169,7 @@ function legendHtml() {
     <span class="lg"><span class="lg-badge">副</span>副組長</span>
     ${sample('st-shinko', '新公主演・ヒロイン')}
     ${sample('st-top is-retired', '退団トップ')}
-    ${view.split || view.mark === 'group' ? '' : `<span class="mark-${view.mark}">${sample('role-otoko', '男役')}${sample('role-musume', '娘役')}</span>`}
+    ${view.split ? '' : `<span class="mark-${view.mark}">${sample('role-otoko', '男役')}${sample('role-musume', '娘役')}</span>`}
     <span class="legend-note">研${SHINKO_MAX_KEN}までが新人公演の対象</span>
   </div>`;
 }
@@ -277,9 +275,6 @@ function openSettings() {
   f.senka.value = view.senka ? '1' : '0';
   f.history.value = view.history ? '1' : '0';
   f.size.value = view.size;
-  f.mark.value = view.mark;
-  f.theme.value = view.theme;
-  $('#mark-field').hidden = view.split;
   const d = state.data;
   $('#data-source').textContent = d ? `${d.source ?? ''}（最終取得 ${d.importedAt ?? '-'}）` : '';
   $('#app-version').textContent = `アプリの版: ${APP_VERSION}`;
@@ -291,7 +286,6 @@ function bindSettings() {
     const { name, value } = e.target;
     if (!(name in view) || e.target.closest('.field-input')) return;
     view[name] = value === '1' ? true : value === '0' ? false : value;
-    $('#mark-field').hidden = view.split;
     saveView();
     render();
   });
@@ -343,6 +337,11 @@ function bindUi() {
   });
 
   $('#btn-settings').addEventListener('click', openSettings);
+  $('#btn-theme').addEventListener('click', () => {
+    view.theme = view.theme === 'dark' ? 'light' : 'dark';
+    saveView();
+    applyTheme();
+  });
 
   // シートの外側タップで閉じる
   for (const dlg of document.querySelectorAll('dialog')) {

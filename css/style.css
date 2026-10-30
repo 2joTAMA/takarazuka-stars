@@ -342,12 +342,6 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 }
 .mark-dots .role-otoko .nm::before { background: var(--c-otoko); }
 .mark-dots .role-musume .nm::before { background: var(--c-musume); }
-.mark-tint .role-musume .nm {
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--c-musume) 18%, transparent);
-  box-shadow: 0 0 0 .15em color-mix(in srgb, var(--c-musume) 18%, transparent);
-}
-.role-sep { display: block; margin: .3em 0; border-top: 1px dashed var(--line-strong); }
 
 .legend {
   position: sticky;
@@ -564,6 +558,8 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 /* ヘッダーのアイコン付きボタン */
 .bar .btn { display: inline-flex; align-items: center; gap: 5px; }
 .bar .btn .ic { width: 16px; height: 16px; }
+.bar .btn-icon { width: 34px; height: 30px; padding: 0; justify-content: center; }
+.bar .btn-icon .ic { width: 18px; height: 18px; }
 
 /* 主演作品 */
 .info-sub { margin: 16px 0 8px; font-size: 14px; color: var(--muted); }
