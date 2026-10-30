@@ -2,7 +2,7 @@
 // usage: node tools/import-wikipedia.mjs <cacheDir> <outFile> [fromTerm] [toTerm]
 // 取得済みのページは cacheDir に保存して再利用する
 import fs from 'node:fs';
-import path from 'node:path';
+import { raw as wikiRaw } from './wiki-fetch.mjs';
 
 const [cacheDir, outFile, fromArg = '45', toArg = '112'] = process.argv.slice(2);
 if (!cacheDir || !outFile) {
@@ -14,16 +14,7 @@ fs.mkdirSync(cacheDir, { recursive: true });
 const TROUPES = { '花組': 'hana', '月組': 'tsuki', '雪組': 'yuki', '星組': 'hoshi', '宙組': 'sora', '専科': 'senka' };
 const TROUPE_PAGES = { hana: '花組 (宝塚歌劇)', tsuki: '月組 (宝塚歌劇)', yuki: '雪組 (宝塚歌劇)', hoshi: '星組 (宝塚歌劇)', sora: '宙組 (宝塚歌劇)' };
 
-async function raw(title, file) {
-  const f = path.join(cacheDir, file);
-  if (fs.existsSync(f)) return fs.readFileSync(f, 'utf8');
-  const url = 'https://ja.wikipedia.org/w/index.php?action=raw&title=' + encodeURIComponent(title);
-  const res = await fetch(url, { headers: { 'User-Agent': 'takarazuka-stars-personal/0.1' } });
-  if (!res.ok) return '';
-  const text = await res.text();
-  fs.writeFileSync(f, text);
-  return text;
-}
+const raw = (title, file) => wikiRaw(cacheDir, title, file);
 
 const clean = s => s
   .replace(/<ref[^>]*\/>/g, '').replace(/<ref[^>]*>[\s\S]*?<\/ref>/g, '')

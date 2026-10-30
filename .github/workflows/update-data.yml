@@ -1,0 +1,62 @@
+# Wikipedia から data/stars.json を取り込み直して、変わっていればコミットする
+# - 自動: 毎月2日と16日の朝4時ごろ（日本時間。GitHub が混んでいると少し遅れる）
+# - 手動: GitHub の Actions → 「Wikipediaから取り込む」→ Run workflow
+name: Wikipediaから取り込む
+
+on:
+  schedule:
+    - cron: '0 19 1,15 * *' # UTC。日本時間では2日・16日の4:00
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 取り込み
+        run: |
+          W="$RUNNER_TEMP/wiki"
+          node tools/import-wikipedia.mjs "$W" data/stars.json 45 112
+          node tools/import-works.mjs "$W" data/stars.json 85
+
+      # 取り込みがおかしくて人数が大きく減ったときは保存しない
+      - name: 人数の確認
+        run: |
+          git show HEAD:data/stars.json > "$RUNNER_TEMP/old.json"
+          node -e '
+            const old = require(process.argv[1]).stars.length;
+            const now = require(process.argv[2]).stars.length;
+            console.log(`前回 ${old}人 → 今回 ${now}人`);
+            if (now < old * 0.9) { console.error("人数が1割以上減ったので保存しません"); process.exit(1); }
+          ' "$RUNNER_TEMP/old.json" "$PWD/data/stars.json"
+
+      # 中身が同じでも取得日（importedAt）は変わるので毎回コミットする。
+      # アプリに「最終取得」日が出るのと、しばらく動きの無いリポジトリでは自動実行が止められるのを防ぐため
+      - name: コミット
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/stars.json
+          git diff --cached --quiet && { echo "変更なし"; exit 0; }
+          git commit -m "Wikipediaから取り込み $(date +%F)"
+          git push
+
+      # Actions からの push ではサイトの再公開が始まらないことがあるので、明示的に頼む
+      - name: サイトを再公開
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" || echo "再公開の依頼に失敗（次の push で反映されます）"

@@ -146,16 +146,6 @@ button { font: inherit; color: inherit; -webkit-tap-highlight-color: transparent
   font-weight: 600;
 }
 .bar .btn[aria-pressed="true"] { background: #fff; color: var(--accent); }
-.btn-save {
-  padding: 6px 14px;
-  border: 0;
-  border-radius: 999px;
-  background: #ffd54a;
-  color: #3a2a00;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 /* ---- 組の切り替え（画面下に浮かぶメニュー） ---- */
 .tabs {
   position: fixed;
@@ -374,22 +364,7 @@ main { flex: 1; min-height: 0; min-width: 0; overflow: hidden; }
 .legend > span { display: inline-flex; gap: 14px; }
 .legend-note { color: var(--muted); }
 
-/* ---- 編集モード ---- */
-.editing .cell .star { text-decoration: underline dotted var(--line-strong); text-underline-offset: 2px; }
 .cell .star[data-id] { cursor: pointer; }
-.add {
-  display: block;
-  width: 100%;
-  margin-top: .25em;
-  padding: 0;
-  border: 1px dashed var(--line-strong);
-  border-radius: 6px;
-  background: transparent;
-  color: var(--muted);
-  font-size: .9em;
-  line-height: 1.5;
-}
-.un-cell .add { display: inline-block; width: 3em; }
 
 /* ---- シート（ダイアログ） ---- */
 dialog.sheet {
@@ -496,9 +471,6 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 }
 .btn-primary { background: var(--accent-2); color: var(--on-accent); }
 .btn-danger { background: transparent; color: #d33; box-shadow: inset 0 0 0 1px color-mix(in srgb, #d33 40%, transparent); }
-.cfg-status { min-height: 1.4em; margin: 0 0 12px; font-size: 14px; }
-.cfg-status[data-state="ok"] { color: var(--c-shinko); }
-.cfg-status[data-state="ng"] { color: #d33; }
 .sheet-foot {
   position: sticky;
   bottom: 0;
@@ -547,41 +519,6 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
 }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .sheet h2:focus { outline: none; }
-
-/* 畳める設定（GitHub連携） */
-.fold { margin: 6px 0 4px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.fold summary {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 0;
-  list-style: none;
-  cursor: pointer;
-}
-.fold summary::-webkit-details-marker { display: none; }
-.fold summary h2 { margin: 0 !important; }
-.fold summary::after {
-  content: "";
-  width: .55em;
-  height: .55em;
-  margin-left: auto;
-  margin-right: 4px;
-  border-right: 2px solid var(--muted);
-  border-bottom: 2px solid var(--muted);
-  transform: rotate(45deg) translateY(-2px);
-  transition: transform .2s;
-}
-.fold[open] summary::after { transform: rotate(225deg) translateY(-2px); }
-.fold[open] { padding-bottom: 4px; }
-.badge {
-  padding: 2px 9px;
-  border-radius: 999px;
-  background: var(--surface-2);
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-.badge[data-ok="true"] { background: color-mix(in srgb, var(--c-shinko) 16%, var(--surface)); color: var(--c-shinko); }
 
 /* シート上部の見出しと閉じるボタン */
 .sheet-head {

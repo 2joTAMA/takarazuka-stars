@@ -16,16 +16,14 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap">
-  <link rel="stylesheet" href="css/style.css?v=10">
-  <script type="module" src="js/app.js?v=10"></script>
+  <link rel="stylesheet" href="css/style.css?v=11">
+  <script type="module" src="js/app.js?v=11"></script>
 </head>
 <body>
   <div id="screen">
   <header class="bar">
     <h1>宝塚スター</h1>
     <div class="bar-actions">
-      <button id="btn-save" class="btn-save" hidden>保存<span id="dirty-count"></span></button>
-      <button id="btn-edit" class="btn" aria-pressed="false">編集</button>
       <button id="btn-settings" class="btn" aria-label="設定">設定</button>
     </div>
   </header>
@@ -105,26 +103,13 @@
         </div>
       </div>
 
-      <details class="fold" id="cfg-fold">
-        <summary><h2>GitHub連携</h2><span class="badge" id="cfg-badge"></span></summary>
-      <p class="note">この端末にだけ保存されます。見るだけなら設定は不要です。</p>
-      <label class="field-input">ユーザー名<input id="cfg-owner" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <label class="field-input">リポジトリ名<input id="cfg-repo" autocomplete="off" autocapitalize="off" spellcheck="false"></label>
-      <label class="field-input">ブランチ<input id="cfg-branch" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="main"></label>
-      <label class="field-input">トークン<input id="cfg-token" type="password" autocomplete="off" spellcheck="false"></label>
-      <div class="row-buttons">
-        <button type="button" id="cfg-test" class="btn">接続テスト</button>
-        <button type="button" id="cfg-save" class="btn btn-primary">連携設定を保存</button>
-      </div>
-      <p class="cfg-status" id="cfg-status" role="status"></p>
-      </details>
-
       <h2>データ</h2>
-      <div class="row-buttons">
-        <button type="button" id="btn-download" class="btn">JSONをダウンロード</button>
-        <button type="button" id="btn-discard" class="btn btn-danger">未保存の変更を破棄</button>
-      </div>
       <p class="note" id="data-source"></p>
+      <div class="row-buttons">
+        <button type="button" id="btn-reload" class="btn">最新のデータを読み込む</button>
+      </div>
+      <p class="note">GitHub が毎月2日と16日の朝4時ごろに Wikipedia から自動で取り込みます。
+        すぐに取り込みたいときは <a href="https://github.com/2joTAMA/takarazuka-stars/actions/workflows/update-data.yml" target="_blank" rel="noopener">GitHubの取り込みページ</a> で「Run workflow」を押してください（数分後に反映）。</p>
       <p class="note" id="app-version"></p>
     </form>
   </dialog>
@@ -137,47 +122,6 @@
     </form>
   </dialog>
 
-  <!-- 編集 -->
-  <dialog id="dlg-edit" class="sheet">
-    <form id="edit-form" method="dialog">
-      <h2 id="edit-title" tabindex="-1" autofocus>編集</h2>
-      <label class="field-input">芸名<input name="name" required autocomplete="off"></label>
-      <label class="field-input">ふりがな<input name="kana" autocomplete="off" placeholder="例: ゆずか れい"></label>
-      <div class="field-row">
-        <label class="field-input">期<input name="term" type="number" inputmode="numeric" min="1" max="200" required></label>
-        <label class="field-input">組<select name="troupe" id="edit-troupe"></select></label>
-      </div>
-      <div class="field">
-        <span class="label">役柄</span>
-        <div class="seg">
-          <label><input type="radio" name="role" value="otoko"><span>男役</span></label>
-          <label><input type="radio" name="role" value="musume"><span>娘役</span></label>
-        </div>
-      </div>
-      <div class="field">
-        <span class="label">ステータス</span>
-        <div class="checks" id="edit-statuses"></div>
-      </div>
-      <label class="field-input">組替え履歴<input name="history" placeholder="例: 月→宙→花" autocomplete="off">
-        <small>組を変えると自動で追記されます</small></label>
-      <div class="field-row">
-        <label class="check"><input type="checkbox" name="retiredFlag"><span>退団</span></label>
-        <label class="field-input">退団年<input name="retiredYear" type="number" inputmode="numeric" placeholder="例: 2026"></label>
-      </div>
-      <label class="field-input">メモ<textarea name="note" rows="2"></textarea></label>
-      <div class="row-buttons" id="edit-order">
-        <span class="label">並び順（成績順）</span>
-        <button type="button" class="btn" data-move="-1">▲ 上へ</button>
-        <button type="button" class="btn" data-move="1">▼ 下へ</button>
-      </div>
-      <div class="sheet-foot">
-        <button type="button" class="btn btn-danger" id="edit-delete">削除</button>
-        <span class="spacer"></span>
-        <button class="btn" value="cancel" formnovalidate>キャンセル</button>
-        <button class="btn btn-primary" value="ok">決定</button>
-      </div>
-    </form>
-  </dialog>
 
   <div class="toast" id="toast" role="status" aria-live="polite" popover="manual"></div>
 </body>

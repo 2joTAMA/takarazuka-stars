@@ -6,6 +6,7 @@
 //   k = shinko（新人公演） / bow（バウ） / tojo（東上） / tour（全国ツアー） / top（トップ時代の公演） / lead（その他の主演・ヒロイン）
 import fs from 'node:fs';
 import path from 'node:path';
+import { raw as wikiRaw } from './wiki-fetch.mjs';
 
 const [cacheDir, starsFile, fromArg = '85'] = process.argv.slice(2);
 if (!cacheDir || !starsFile) {
@@ -14,17 +15,7 @@ if (!cacheDir || !starsFile) {
 }
 fs.mkdirSync(path.join(cacheDir, 'p'), { recursive: true });
 
-async function raw(title, file) {
-  const f = path.join(cacheDir, file);
-  if (fs.existsSync(f)) return follow(fs.readFileSync(f, 'utf8'), file);
-  const res = await fetch('https://ja.wikipedia.org/w/index.php?action=raw&title=' + encodeURIComponent(title),
-    { headers: { 'User-Agent': 'takarazuka-stars-personal/0.1' } });
-  await new Promise(r => setTimeout(r, 300)); // 続けて取りすぎると失敗するので少し待つ
-  if (!res.ok) { console.warn('取得失敗', res.status, title); return ''; } // 失敗はキャッシュしない
-  const text = await res.text();
-  fs.writeFileSync(f, text);
-  return follow(text, file);
-}
+const raw = async (title, file) => follow(await wikiRaw(cacheDir, title, file), file);
 // 「#転送 [[真矢ミキ]]」のような転送ページは転送先を読む
 function follow(text, file) {
   const to = text.match(/^#(?:転送|REDIRECT)\s*\[\[([^\]|#]+)/i)?.[1];
@@ -69,18 +60,26 @@ const titlesOf = s => [...s.matchAll(/『([^』]+)』/g)].map(m => m[1].trim());
 const VENUE_ABBR = [
   // 「シアター・ドラマシティ」は中点で区切られるので、区切る前に置き換える
   // 「赤坂ACTシアター・ドラマシティ」は2つの劇場なので、ACT の直後は置き換えない
-  [/梅田芸術劇場シアター・ドラマシティ|(?<!ACT)シアター・ドラマシティ/g, 'ドラマシティ'],
-  [/梅田芸術劇場(メインホール)?(?!シアター)/g, '梅芸メインホール'],
-  [/TBS赤坂ACTシアター/g, '赤坂ACTシアター'],
+  [/梅田芸術劇場 ?シアター・?ドラマシティ|(?<!ACT ?)シアター・?ドラマシティ/g, 'ドラマシティ'],
+  [/梅田芸術劇場 ?(メインホール)?(?! ?シアター)/g, '梅芸メインホール'],
+  [/TBS ?赤坂ACTシアター/g, '赤坂ACTシアター'],
 ];
 const shortVenue = v => {
-  let s = v.replace(/\s+/g, '');
+  // 空白は Wikipedia の書き方のまま残す（例: 東京建物 Brillia HALL）
+  let s = v.replace(/\s+/g, ' ').trim().replace(/公演$/, '');
   for (const [re, abbr] of VENUE_ABBR) s = s.replace(re, abbr);
-  return [...new Set(s.split('・'))].slice(0, 3).join('・');
+  return [...new Set(s.split('・').map(x => x.trim()))].slice(0, 3).join('・');
 };
+// 会場は作品名『』のすぐ後ろのカッコ（例:『BE SHINING!!』（昭和女子大学人見記念講堂・神戸国際会館））。
+// 読みがな（ひらがなだけ）や「外部出演」などの注記は会場ではないので飛ばす。
+// カッコが無い古い書き方「2003年、バウホール・日本青年館『…』」は『より前から拾う
+const VENUE_WORD = /バウ|青年館|ドラマシティ|梅田|劇場|ホール|座|フォーラム|KAAT|シアター|会館|講堂|アリーナ|武道館|全国ツアー/;
 const venueOf = s => {
-  const m = [...s.matchAll(/（([^（）]+)）/g)].map(x => x[1]).find(x =>
-    /全国ツアー|博多座|バウ|青年館|ドラマシティ|梅田|東京建物|KAAT|フォーラム|オーブ|赤坂|御園座|中日劇場|シアター|ホール|劇場|台湾|香港|公演/.test(x));
+  const m = [...s.matchAll(/』\s*（([^（）]+)）/g)].map(x => x[1].trim()).find(x =>
+    !/^[ぁ-ゖー・\s]+$/.test(x) && !/出演|役替|主演|ヒロイン|新人公演|千秋楽|休演|代役/.test(x))
+    // 役名の後ろに書かれた「- ソール（博多座・中日劇場）」
+    ?? [...s.matchAll(/（([^（）]+)）/g)].map(x => x[1]).findLast(x => VENUE_WORD.test(x) && !/本役|新人公演/.test(x))
+    ?? s.replace(/^\*?\s*\d{4}年[^、『]*、?/, '').split('『')[0].split(/[、\s]/).find(x => VENUE_WORD.test(x));
   if (!m) return undefined;
   if (/全国ツアー/.test(m)) return '全国ツアー';
   return shortVenue(m);
@@ -142,7 +141,9 @@ for (const s of targets) {
       return;
     }
     const marks = [...line.matchAll(/'''([^']+)'''/g)].map(m => clean(m[1]));
-    const kinds = [...new Set(marks.flatMap(m => m.split(/[、・]/).length > 1 && /バウ・東上/.test(m) ? ['bow', 'tojo'] : [kindOf(m)]).filter(Boolean))];
+    // 「バウ・東上初ヒロイン」はバウホールから日本青年館へ続けて上演した1つの公演なので、東上の1行だけにする
+    let kinds = [...new Set(marks.map(m => /バウ・東上/.test(m) && /主演|ヒロイン/.test(m) ? 'tojo' : kindOf(m)).filter(Boolean))];
+    if (kinds.includes('tojo')) kinds = kinds.filter(k => k !== 'bow');
     for (const k of kinds) {
       let t;
       if (k === 'shinko') {
@@ -152,6 +153,11 @@ for (const s of targets) {
       if (t) works.push({ y, t, k, g: entries[i].g, v: k === 'lead' || k === 'tojo' ? venueOf(c) : undefined });
     }
   });
+  // 同じ作品がバウと東上で別々の行に書かれているときも、東上の1行にまとめる
+  for (let i = works.length - 1; i > 0; i--) {
+    const [a, b] = [works[i - 1], works[i]];
+    if (a.t === b.t && [a.k, b.k].includes('bow') && [a.k, b.k].includes('tojo')) works.splice(a.k === 'bow' ? i - 1 : i, 1);
+  }
   for (const w of works) { if (!w.v) delete w.v; if (!w.g) delete w.g; }
   if (works.length) { s.works = works; withWorks++; }
 }
