@@ -478,13 +478,32 @@ dialog.sheet::backdrop { background: rgba(0, 0, 0, .4); }
   justify-content: flex-end;
   align-items: center;
   gap: 8px;
-  margin: 10px -18px 0;
-  padding: 12px 18px 0;
+  /* フォームの下余白の分まで覆い、ボタンの下にも余白を取る */
+  margin: 10px -18px calc(-1 * (env(safe-area-inset-bottom) + 12px));
+  padding: 12px 18px calc(env(safe-area-inset-bottom) + 22px);
   border-top: 1px solid var(--line);
   background: var(--surface);
 }
 .sheet-foot .spacer { flex: 1; }
 
+#info-body { position: relative; }
+#info-body:focus { outline: none; }
+/* 開いたときに閉じるボタンへフォーカスの枠が出ないように（キーボード操作のときだけ出す） */
+.sheet .btn:focus:not(:focus-visible) { outline: none; }
+.info-mark {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  z-index: 0;
+  width: 112px;
+  height: 112px;
+  color: var(--tc);
+  opacity: .16;
+  pointer-events: none;
+}
+.info-mark .ic { width: 100%; height: 100%; stroke-width: 1.4; }
+.info-head, .info { position: relative; z-index: 1; }
+.w-tag.k-grand { background: color-mix(in srgb, var(--c-badge) 15%, transparent); color: var(--c-badge); }
 .info-head { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; align-items: end; margin: 6px 0 14px; }
 .info-head > .role-dot { width: .8em; height: .8em; margin: 0 0 .6em; }
 .info-name { margin: 0 !important; font-size: 22px !important; line-height: 1.3; }

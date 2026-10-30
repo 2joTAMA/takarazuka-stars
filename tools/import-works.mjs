@@ -3,7 +3,7 @@
 // usage: node tools/import-works.mjs <cacheDir> <stars.json> [fromTerm=85]
 // works: [{ y: 初日の年, t: 作品名, k: 種類, g?: 組, v?: 会場 }]
 // farewell: { y: 年, t: 作品名, g?: 組 }
-//   k = shinko（新人公演） / bow（バウ） / tojo（東上） / tour（全国ツアー） / top（トップ時代の公演） / lead（その他の主演・ヒロイン）
+//   k = shinko（新人公演） / bow（バウ） / tojo（東上） / tour（全国ツアー） / grand（大劇場） / top（トップ時代の公演） / lead（その他の主演・ヒロイン）
 import fs from 'node:fs';
 import path from 'node:path';
 import { raw as wikiRaw } from './wiki-fetch.mjs';
@@ -95,6 +95,7 @@ function kindOf(mark) {
   if (/バウ/.test(mark)) return 'bow';
   if (/東上/.test(mark)) return 'tojo';
   if (/全国ツアー/.test(mark)) return 'tour';
+  if (/大劇場/.test(mark)) return 'grand'; // 役替わりなどでの「大劇場主演・ヒロイン」
   return 'lead';
 }
 

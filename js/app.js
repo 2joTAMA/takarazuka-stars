@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=11';
-import * as store from './store.js?v=11';
-import { ICONS } from './icons.js?v=11';
+import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=12';
+import * as store from './store.js?v=12';
+import { ICONS } from './icons.js?v=12';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 11;
+const APP_VERSION = 12;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -221,12 +221,17 @@ function setFocus(id, exact = false) {
 }
 
 // ---- 閲覧用の詳細 ----
-const WORK_TAG = { shinko: '新公', bow: 'バウ', tojo: '東上', tour: '全ツ', top: 'トップ' };
+const WORK_TAG = { shinko: '新公', bow: 'バウ', tojo: '東上', tour: '全ツ', grand: '大劇場', top: 'トップ' };
+// バウでも東上でもない主演作（ドラマシティだけ、など）は、1つの劇場ならその略称をラベルにする
+const VENUE_TAG = {
+  'ドラマシティ': 'DC', '梅芸メインホール': '梅芸', 'バウホール': 'バウ', '宝塚バウホール': 'バウ',
+  '博多座': '博多座', '御園座': '御園座', '中日劇場': '中日', '日生劇場': '日生', '全国ツアー': '全ツ',
+};
 function worksHtml(s) {
   if (!s.works?.length) return '';
   let prev = null;
   const items = s.works.map(w => {
-    const tag = WORK_TAG[w.k] ?? (s.role === 'musume' ? 'ヒロイン' : '主演');
+    const tag = WORK_TAG[w.k] ?? VENUE_TAG[w.v] ?? (s.role === 'musume' ? 'ヒロイン' : '主演');
     const venue = w.v ?? (w.k === 'top' ? '大劇場' : '');
     // 組が変わったところ（初めの組・組替え）に組名の見出しを入れる
     const head = w.g && w.g !== prev ? `<li class="w-group t-${w.g}">${TROUPE_BY_ID[w.g].name}</li>` : '';
@@ -245,7 +250,9 @@ function openInfo(id) {
   const badges = ['top', 'topMusume', 'kumicho', 'fukuKumicho'].filter(st => s.statuses?.includes(st))
     .map(st => `<span class="info-badge b-${st}">${st === 'top' ? 'トップスター' : statusLabel(st, s.role)}</span>`).join('');
   const dot = `<span class="role-dot role-${s.role}"></span>`;
-  $('#info-body').innerHTML = `
+  // 右上に今の組（組替えした人は最後の組）のマークを薄く大きく出す
+  const mark = s.troupe && ICONS[s.troupe] ? `<div class="info-mark t-${s.troupe}">${ICONS[s.troupe]}</div>` : '';
+  $('#info-body').innerHTML = `${mark}
     <div class="info-head">${dot}<div>${s.kana ? `<div class="info-kana">${esc(s.kana)}</div>` : ''}<h2 class="info-name">${esc(s.name)}${badges}</h2></div></div>
     <dl class="info">
       ${row('期', `${s.term}期（研${kenOf(s.term)}）`)}
