@@ -1,9 +1,9 @@
-import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=17';
-import * as store from './store.js?v=17';
-import { ICONS } from './icons.js?v=17';
+import { TROUPES, TROUPE_BY_ID, ROLES, statusLabel, SHINKO_MAX_KEN, kenOf, isActive, isTop } from './config.js?v=18';
+import * as store from './store.js?v=18';
+import { ICONS } from './icons.js?v=18';
 
 // 更新したら index.html と import の ?v= と一緒に上げる（iPhoneの古いキャッシュ対策）
-const APP_VERSION = 17;
+const APP_VERSION = 18;
 
 const $ = sel => document.querySelector(sel);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -263,7 +263,7 @@ function openInfo(id) {
   $('#info-body').innerHTML = `${mark}
     <div class="info-head">${dot}<div>${s.kana ? `<div class="info-kana">${esc(s.kana)}</div>` : ''}<h2 class="info-name">${esc(s.name)}${badges}</h2></div></div>
     <dl class="info">
-      ${row('期', `${s.term}期（研${kenOf(s.term)}）`)}
+      ${row('期', isActive(s) ? `${s.term}期（研${kenOf(s.term)}）` : `${s.term}期`)}
       ${row('組', s.troupe ? TROUPE_BY_ID[s.troupe].name : '未配属')}
       ${row('役柄', roleText(s))}
       ${row('組替え', s.history?.length > 1 ? historyText(s.history) : '')}
